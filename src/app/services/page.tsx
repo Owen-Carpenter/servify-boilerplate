@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown, Plus, Minus } from "lucide-react";
+import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown } from "lucide-react";
 import { initScrollAnimations } from "@/lib/scroll-animations";
 import { Service } from "@/lib/services";
 import { getServices } from "@/lib/supabase-services";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 // FAQ Data
 const faqItems = [
@@ -40,7 +41,6 @@ export default function ServicesPage() {
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<string[]>(["all"]);
   const [loading, setLoading] = useState(true);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   
   // Initialize scroll animations - only on initial mount
   useEffect(() => {
@@ -119,11 +119,6 @@ export default function ServicesPage() {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  // Toggle FAQ expansion
-  const toggleFaq = (index: number) => {
-    setExpandedFaq(expandedFaq === index ? null : index);
-  };
-
   return (
     <main className="gradient-bg pt-32 pb-20">
       <div className="absolute inset-0 opacity-5 pointer-events-none">
@@ -140,40 +135,59 @@ export default function ServicesPage() {
         </div>
 
         {/* Filtering Options */}
-        <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-10">
-          <div className="flex items-center mb-4">
-            <Filter className="w-5 h-5 text-white mr-2" />
-            <h2 className="text-lg text-white font-medium">Filter Services</h2>
+        <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center">
+              <Filter className="w-5 h-5 text-white mr-2" />
+              <h2 className="text-lg text-white font-medium">Filter Services</h2>
+            </div>
+            
+            <div className="flex items-center">
+              <ArrowUpDown className="w-4 h-4 text-white mr-2" />
+              <select 
+                className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none"
+                value={sortOption}
+                onChange={handleSortChange}
+                style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
+              >
+                <option value="default" style={{ color: "black", background: "white" }}>Sort by: Default</option>
+                <option value="price-low" style={{ color: "black", background: "white" }}>Price: Low to High</option>
+                <option value="price-high" style={{ color: "black", background: "white" }}>Price: High to Low</option>
+                <option value="duration" style={{ color: "black", background: "white" }}>Duration: Short to Long</option>
+              </select>
+            </div>
           </div>
           
-          <div className="flex flex-wrap gap-2 mb-4">
-            {categories.map((category) => (
-              <Button 
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button
+              variant={activeCategory === "all" ? "default" : "outline"}
+              onClick={() => handleCategoryChange("all")}
+              className={`
+                ${activeCategory === "all" 
+                  ? "bg-white/20 backdrop-blur-md text-white border-white/20"
+                  : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
+                } transition-all duration-300
+              `}
+              size="sm"
+            >
+              All Services
+            </Button>
+            {categories.filter(category => category !== "all").map((category) => (
+              <Button
                 key={category}
-                variant={activeCategory === category ? "default" : "outline"} 
-                className={activeCategory === category 
-                  ? "bg-white text-primary shadow-md border-0" 
-                  : "bg-white/20 text-white border-0 hover:bg-white hover:text-primary"}
+                variant={activeCategory === category ? "default" : "outline"}
                 onClick={() => handleCategoryChange(category)}
+                className={`
+                  ${activeCategory === category 
+                    ? "bg-white/20 backdrop-blur-md text-white border-white/20"
+                    : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
+                  } transition-all duration-300
+                `}
+                size="sm"
               >
                 {formatCategoryName(category)}
               </Button>
             ))}
-          </div>
-          
-          <div className="flex items-center">
-            <ArrowUpDown className="w-4 h-4 text-white mr-2" />
-            <select 
-              className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none"
-              value={sortOption}
-              onChange={handleSortChange}
-              style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
-            >
-              <option value="default" style={{ color: "black", background: "white" }}>Sort by: Default</option>
-              <option value="price-low" style={{ color: "black", background: "white" }}>Price: Low to High</option>
-              <option value="price-high" style={{ color: "black", background: "white" }}>Price: High to Low</option>
-              <option value="duration" style={{ color: "black", background: "white" }}>Duration: Short to Long</option>
-            </select>
           </div>
         </div>
 
@@ -184,36 +198,43 @@ export default function ServicesPage() {
               <div className="text-white text-lg">Loading services...</div>
             </div>
           ) : filteredServices.length > 0 ? (
-            filteredServices.map((service) => (
+            filteredServices.map((service, index) => (
               <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300">
-                <Card className="h-full border-0 shadow-lg bg-white/95 backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300">
-                  <CardHeader className="pb-2">
+                <Card className="h-full overflow-hidden transition-all duration-300
+                  border border-white/20 shadow-xl
+                  bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md
+                  hover:shadow-[0_10px_40px_rgba(255,255,255,0.15)] hover:border-white/30 relative group">
+                  <div className="absolute inset-0 flex items-center justify-center text-[250px] font-bold opacity-[0.15] pointer-events-none select-none z-0 animate-float-slow bg-clip-text text-transparent bg-gradient-to-br from-white to-white/30" style={{ '--rotation': `${(index % 3) - 1}deg` } as React.CSSProperties}>
+                    {(index + 1).toString().padStart(2, '0')}
+                  </div>
+                  <CardHeader className="pb-2 relative z-10">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-xl gradient-text">{service.title}</CardTitle>
-                        <CardDescription className="mt-1">{service.details}</CardDescription>
+                        <CardTitle className="text-xl text-primary font-bold group-hover:text-primary/80 transition-colors">{service.title}</CardTitle>
+                        <CardDescription className="mt-1 text-white/80">{service.details}</CardDescription>
                       </div>
-                      <span className="text-xs px-2 py-1 bg-primary/10 rounded-full text-primary">
+                      <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white">
                         {formatCategoryName(service.category)}
                       </span>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                  <CardContent className="relative z-10">
+                    <div className="flex justify-between text-sm text-white/70 mt-2">
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1 text-primary" />
+                        <Clock className="h-4 w-4 mr-1 text-white/90" />
                         <span>{service.time}</span>
                       </div>
-                      <div className="flex items-center font-medium text-foreground">
-                        <DollarSign className="h-4 w-4 mr-1 text-primary" />
-                        <span>{service.price}</span>
+                      <div className="flex items-center font-medium">
+                        <DollarSign className="h-4 w-4 mr-1 text-accent group-hover:text-accent/80 transition-colors" />
+                        <span className="text-accent group-hover:text-accent/80 transition-colors">{service.price}</span>
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    <Button className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] transition-all duration-200 text-white">
+                  <CardFooter className="border-t border-white/10 pt-4 relative z-10">
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-white 
+                      backdrop-blur-sm transition-all duration-200 group-hover:shadow-lg group-hover:scale-[1.02]">
                       <span>Book Now</span>
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                      <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </CardFooter>
                 </Card>
@@ -234,54 +255,39 @@ export default function ServicesPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-3 gradient-text">Frequently Asked Questions</h2>
-            <p className="text-white/80 max-w-2xl mx-auto">
-              Find answers to common questions about our services and booking process.
-            </p>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            {faqItems.map((item, index) => (
-              <div 
-                key={index} 
-                className="mb-4 bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden transition-all duration-300"
-              >
-                <button 
-                  className="w-full p-4 text-left flex justify-between items-center"
-                  onClick={() => toggleFaq(index)}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold mb-8 text-center text-white">Frequently Asked Questions</h2>
+            <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+              {faqItems.map((faq, index) => (
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="border border-white/20 backdrop-blur-md bg-white/10 mb-4 rounded-lg overflow-hidden hover:bg-white/15 transition-all duration-300"
                 >
-                  <h3 className="text-white font-medium text-lg">{item.question}</h3>
-                  <div className="bg-white/20 rounded-full p-1">
-                    {expandedFaq === index ? (
-                      <Minus size={18} className="text-white" />
-                    ) : (
-                      <Plus size={18} className="text-white" />
-                    )}
-                  </div>
-                </button>
-                {expandedFaq === index && (
-                  <div className="px-4 pb-4 text-white/80">
-                    <p>{item.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+                  <AccordionTrigger className="px-4 py-4 text-white hover:text-white hover:no-underline">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-white/80 px-4 pb-4">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
+        </section>
 
-          {/* Contact CTA */}
-          <div className="text-center mt-10 bg-white/10 backdrop-blur-sm p-6 rounded-lg max-w-2xl mx-auto">
-            <h3 className="text-xl font-bold mb-2 text-white">Still have questions?</h3>
-            <p className="text-white/80 mb-4">
-              Our team is ready to help you with any other questions you may have about our services.
-            </p>
-            <Button 
-              className="bg-white text-primary hover:bg-white/90 shadow-md transition-all duration-200"
-            >
-              Contact Support
-            </Button>
-          </div>
+        {/* Contact CTA */}
+        <div className="text-center mt-10 bg-white/10 backdrop-blur-sm p-6 rounded-lg max-w-2xl mx-auto">
+          <h3 className="text-xl font-bold mb-2 text-white">Still have questions?</h3>
+          <p className="text-white/80 mb-4">
+            Our team is ready to help you with any other questions you may have about our services.
+          </p>
+          <Button 
+            className="bg-white text-primary hover:bg-white/90 shadow-md transition-all duration-200"
+          >
+            Contact Support
+          </Button>
         </div>
       </div>
     </main>
