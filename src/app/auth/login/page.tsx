@@ -1,0 +1,226 @@
+'use client';
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Alert, 
+  AlertDescription, 
+  AlertTitle 
+} from "@/components/ui/alert";
+import { CheckCircle, Mail, Lock, LogIn, Github } from "lucide-react";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
+  const registrationSuccess = searchParams?.get('registered') === 'true';
+  const verificationSuccess = searchParams?.get('verified') === 'true';
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (!result?.error) {
+        router.push(callbackUrl);
+      } else {
+        setIsLoading(false);
+        setError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : result.error
+        );
+      }
+    } catch (error) {
+      setIsLoading(false);
+      setError("An unexpected error occurred");
+      console.error("Login error:", error);
+    }
+  }
+
+  const handleSocialLogin = async (provider: string) => {
+    setError(null);
+    try {
+      await signIn(provider, {
+        callbackUrl,
+      });
+    } catch (error) {
+      console.error(`${provider} login error:`, error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gradient-bg py-12">
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-1/4 w-72 h-72 bg-white rounded-full mix-blend-overlay blur-3xl"></div>
+        <div className="absolute bottom-40 right-1/4 w-56 h-56 bg-white rounded-full mix-blend-overlay blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white rounded-full mix-blend-overlay blur-3xl opacity-20"></div>
+      </div>
+      <div className="w-full max-w-md z-10">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block">
+            <h1 className="text-5xl font-bold gradient-text">Servify</h1>
+            <p className="mt-2 text-white/70">Your Service Marketplace</p>
+          </Link>
+        </div>
+        
+        <Card className="w-full backdrop-blur-sm bg-white/90 shadow-2xl border-0 overflow-hidden">
+          <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#6E3FC9]/30 rounded-full"></div>
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#FF8A4C]/30 rounded-full"></div>
+          </div>
+          <CardHeader className="relative z-10">
+            <CardTitle className="text-2xl text-center gradient-text">Welcome Back</CardTitle>
+            <CardDescription className="text-center">
+              Sign in to your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 relative z-10">
+            {registrationSuccess && (
+              <Alert className="bg-emerald-50 border-emerald-200">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <AlertTitle>Registration Successful</AlertTitle>
+                <AlertDescription className="text-emerald-600">
+                  Your account has been created. Please check your email to verify your account.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {verificationSuccess && (
+              <Alert className="bg-emerald-50 border-emerald-200">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <AlertTitle>Email Verified</AlertTitle>
+                <AlertDescription className="text-emerald-600">
+                  Your email has been verified. You can now sign in to your account.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {error && (
+              <Alert className="bg-destructive/15 border-destructive/20">
+                <AlertDescription className="text-destructive">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full backdrop-blur-sm bg-white/80 hover:bg-white/50 shadow-sm border-0 transition-all duration-200"
+                onClick={() => handleSocialLogin("google")}
+                disabled={isLoading}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 488 512"
+                  className="h-4 w-4 mr-2 text-red-500"
+                  fill="currentColor"
+                >
+                  <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
+                </svg>
+                Sign in with Google
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full backdrop-blur-sm bg-white/80 hover:bg-white/50 shadow-sm border-0 transition-all duration-200"
+                onClick={() => handleSocialLogin("github")}
+                disabled={isLoading}
+              >
+                <Github className="mr-2 h-4 w-4" />
+                Sign in with Github
+              </Button>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white/50 backdrop-blur-sm px-2 text-muted-foreground">
+                Or with email
+              </span>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-sm text-primary hover:text-primary/80 font-medium underline-offset-4 transition-colors"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <Button className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" type="submit" disabled={isLoading}>
+                <LogIn className="mr-2 h-4 w-4" />
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="relative z-10">
+            <div className="text-sm text-center w-full text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/register"
+                className="text-primary font-medium underline-offset-4 transition-colors hover:text-primary/80"
+              >
+                Sign up
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
+} 

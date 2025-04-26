@@ -1,0 +1,180 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown } from "lucide-react";
+import { initScrollAnimations } from "@/lib/scroll-animations";
+import { mockServices, Service } from "@/lib/services";
+
+// Get unique categories from the imported mockServices
+const categories = ["all", ...Array.from(new Set(mockServices.map(service => service.category)))];
+
+export default function ServicesPage() {
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [sortOption, setSortOption] = useState<string>("default");
+  const [filteredServices, setFilteredServices] = useState<Service[]>(mockServices);
+  
+  // Initialize scroll animations - only on initial mount
+  useEffect(() => {
+    const cleanup = initScrollAnimations();
+    return cleanup;
+  }, []);
+  
+  // Apply filtering and sorting whenever dependencies change
+  useEffect(() => {
+    // Start with all services
+    let result = [...mockServices];
+    
+    // Filter by category (case-insensitive comparison for safety)
+    if (activeCategory !== "all") {
+      result = result.filter(service => 
+        service.category.toLowerCase() === activeCategory.toLowerCase()
+      );
+    }
+    
+    // Apply sorting
+    result = result.sort((a, b) => {
+      switch (sortOption) {
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "duration":
+          // Extract numeric values from duration strings (e.g., "60 min" → 60)
+          const durationA = parseInt(a.duration.split(" ")[0]);
+          const durationB = parseInt(b.duration.split(" ")[0]);
+          return durationA - durationB;
+        default:
+          return 0;
+      }
+    });
+    
+    // Update state with filtered & sorted services
+    setFilteredServices(result);
+  }, [activeCategory, sortOption]);
+  
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+  };
+  
+  // Handle sort change
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value);
+  };
+  
+  // Format category name for display
+  const formatCategoryName = (category: string) => {
+    if (category === "all") return "All Services";
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
+
+  return (
+    <main className="gradient-bg pt-32 pb-20">
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <div className="absolute top-1/4 left-1/3 w-72 h-72 rounded-full bg-white blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300"></div>
+      </div>
+      
+      <div className="container mx-auto relative z-10">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold mb-3 gradient-text">Our Services</h1>
+          <p className="text-white/80 max-w-2xl mx-auto">
+            Browse through our range of professional services and book your appointment today.
+          </p>
+        </div>
+
+        {/* Filtering Options */}
+        <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-10">
+          <div className="flex items-center mb-4">
+            <Filter className="w-5 h-5 text-white mr-2" />
+            <h2 className="text-lg text-white font-medium">Filter Services</h2>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {categories.map((category) => (
+              <Button 
+                key={category}
+                variant={activeCategory === category ? "default" : "outline"} 
+                className={activeCategory === category 
+                  ? "bg-white text-primary shadow-md border-0" 
+                  : "bg-white/20 text-white border-0 hover:bg-white hover:text-primary"}
+                onClick={() => handleCategoryChange(category)}
+              >
+                {formatCategoryName(category)}
+              </Button>
+            ))}
+          </div>
+          
+          <div className="flex items-center">
+            <ArrowUpDown className="w-4 h-4 text-white mr-2" />
+            <select 
+              className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none"
+              value={sortOption}
+              onChange={handleSortChange}
+            >
+              <option value="default">Sort by: Default</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="duration">Duration: Short to Long</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Services Grid - SIMPLIFIED ANIMATIONS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredServices.length > 0 ? (
+            filteredServices.map((service) => (
+              <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300">
+                <Card className="h-full border-0 shadow-lg bg-white/95 backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl gradient-text">{service.name}</CardTitle>
+                        <CardDescription className="mt-1">{service.description}</CardDescription>
+                      </div>
+                      <span className="text-xs px-2 py-1 bg-primary/10 rounded-full text-primary">
+                        {formatCategoryName(service.category)}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-primary" />
+                        <span>{service.duration}</span>
+                      </div>
+                      <div className="flex items-center font-medium text-foreground">
+                        <DollarSign className="h-4 w-4 mr-1 text-primary" />
+                        <span>{service.price}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="border-t pt-4">
+                    <Button className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] transition-all duration-200 text-white">
+                      <span>Book Now</span>
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg">
+              <p className="text-white text-lg">No services found for the selected category.</p>
+              <Button 
+                variant="outline" 
+                className="mt-4 border-white text-white hover:bg-white hover:text-primary"
+                onClick={() => setActiveCategory("all")}
+              >
+                View All Services
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+} 
