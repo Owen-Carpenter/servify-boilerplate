@@ -132,7 +132,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
         <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="content-container relative z-10">
         <Button 
           variant="ghost" 
           onClick={handleBack} 

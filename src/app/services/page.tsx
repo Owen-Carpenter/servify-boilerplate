@@ -126,7 +126,7 @@ export default function ServicesPage() {
         <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300"></div>
       </div>
       
-      <div className="container mx-auto relative z-10">
+      <div className="content-container relative z-10">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold mb-3 gradient-text">Our Services</h1>
           <p className="text-white/80 max-w-2xl mx-auto">
@@ -253,40 +253,41 @@ export default function ServicesPage() {
             </div>
           )}
         </div>
-
+        
         {/* FAQ Section */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8 text-center text-white">Frequently Asked Questions</h2>
-            <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
-              {faqItems.map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`item-${index}`}
-                  className="border border-white/20 backdrop-blur-md bg-white/10 mb-4 rounded-lg overflow-hidden hover:bg-white/15 transition-all duration-300"
-                >
-                  <AccordionTrigger className="px-4 py-4 text-white hover:text-white hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-white/80 px-4 pb-4">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </section>
-
+        <div className="mt-20 bg-white/10 backdrop-blur-sm p-8 rounded-lg">
+          <h2 className="text-3xl font-bold mb-8 text-center text-white">Frequently Asked Questions</h2>
+          
+          <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
+            {faqItems.map((item, index) => (
+              <AccordionItem 
+                key={index} 
+                value={`item-${index}`}
+                className="border-b border-white/20 last:border-0"
+              >
+                <AccordionTrigger className="text-white font-medium text-left hover:text-accent transition-colors duration-200">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-white/80">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+        
         {/* Contact CTA */}
-        <div className="text-center mt-10 bg-white/10 backdrop-blur-sm p-6 rounded-lg max-w-2xl mx-auto">
-          <h3 className="text-xl font-bold mb-2 text-white">Still have questions?</h3>
-          <p className="text-white/80 mb-4">
-            Our team is ready to help you with any other questions you may have about our services.
+        <div className="mt-20 text-center">
+          <h2 className="text-3xl font-bold mb-4 text-white">Need Help Choosing a Service?</h2>
+          <p className="max-w-xl mx-auto text-white/80 mb-8">
+            Our experts are ready to help you find the perfect service for your needs.
           </p>
           <Button 
-            className="bg-white text-primary hover:bg-white/90 shadow-md transition-all duration-200"
+            size="lg"
+            className="bg-accent hover:bg-accent/90 text-white hover:shadow-lg transition-all duration-300"
+            asChild
           >
-            Contact Support
+            <Link href="/contact">Contact Us</Link>
           </Button>
         </div>
       </div>

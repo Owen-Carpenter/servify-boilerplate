@@ -31,7 +31,7 @@ export default function HomePage() {
           <div className="absolute bottom-10 left-1/4 w-20 h-20 bg-white rounded-full animate-pulse delay-200"></div>
           <div className="absolute -bottom-10 right-1/3 w-30 h-30 bg-white rounded-full animate-pulse delay-400"></div>
         </div>
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+        <div className="content-container grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
           <div className="space-y-8">
             <h1 className="text-6xl font-bold leading-tight animate-fadeInLeft">
               Your Services, <span className="text-secondary font-bold">Simplified</span>
@@ -192,7 +192,7 @@ export default function HomePage() {
 
       {/* About Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto">
+        <div className="content-container">
           <div className="text-center mb-16 reveal">
             <h2 className="text-4xl font-bold mb-4 gradient-text">Why Choose Servify</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
@@ -241,7 +241,7 @@ export default function HomePage() {
           </svg>
         </div>
         
-        <div className="container mx-auto">
+        <div className="content-container">
           <div className="text-center mb-16 reveal">
             <h2 className="text-4xl font-bold mb-4 text-white">Popular Services</h2>
             <p className="text-white/90 max-w-2xl mx-auto">
@@ -300,7 +300,7 @@ export default function HomePage() {
 
       {/* Testimonials Section */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto">
+        <div className="content-container">
           <div className="text-center mb-16 reveal">
             <h2 className="text-4xl font-bold mb-4 gradient-text">What Our Clients Say</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
@@ -363,7 +363,7 @@ export default function HomePage() {
           <div className="absolute top-20 left-20 w-60 h-60 bg-white rounded-full animate-pulse"></div>
           <div className="absolute bottom-40 right-20 w-40 h-40 bg-white rounded-full animate-pulse delay-300"></div>
         </div>
-        <div className="container mx-auto relative z-10">
+        <div className="content-container">
           <div className="text-center mb-16 reveal">
             <h2 className="text-4xl font-bold mb-4">Get In Touch</h2>
             <p className="text-white/80 max-w-2xl mx-auto">
@@ -478,7 +478,7 @@ export default function HomePage() {
           <div className="absolute bottom-20 -right-20 w-80 h-80 rounded-full bg-[#FF8A4C]/20 blur-3xl"></div>
         </div>
         
-        <div className="container mx-auto relative z-10">
+        <div className="content-container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4 gradient-text hover-scale">Servify</h3>

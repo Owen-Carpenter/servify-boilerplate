@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SessionProvider>
           <Navigation />
-        {children}
+          {children}
         </SessionProvider>
       </body>
     </html>
