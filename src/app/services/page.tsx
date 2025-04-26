@@ -4,10 +4,34 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown } from "lucide-react";
+import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown, Plus, Minus } from "lucide-react";
 import { initScrollAnimations } from "@/lib/scroll-animations";
 import { Service } from "@/lib/services";
 import { getServices } from "@/lib/supabase-services";
+
+// FAQ Data
+const faqItems = [
+  {
+    question: "How do I book a service?",
+    answer: "Booking a service is easy! Simply browse our services, select the one you're interested in, choose your preferred date and time, and complete the booking process. You'll receive a confirmation email with all the details."
+  },
+  {
+    question: "Can I reschedule or cancel my appointment?",
+    answer: "Yes, you can reschedule or cancel your appointment up to 24 hours before the scheduled time without any charge. Please contact our customer service or use the reschedule function in your account dashboard."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept all major credit cards, PayPal, and bank transfers. Payment is processed securely at the time of booking to confirm your appointment."
+  },
+  {
+    question: "Are your service providers licensed and insured?",
+    answer: "Absolutely! All our service providers are fully licensed, insured, and have undergone thorough background checks. We only work with experienced professionals who meet our high quality standards."
+  },
+  {
+    question: "Do you offer any discounts or loyalty programs?",
+    answer: "Yes, we offer a loyalty program where you earn points for each booking which can be redeemed for discounts on future services. New customers may also receive a special discount on their first booking."
+  }
+];
 
 export default function ServicesPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -16,6 +40,7 @@ export default function ServicesPage() {
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<string[]>(["all"]);
   const [loading, setLoading] = useState(true);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   
   // Initialize scroll animations - only on initial mount
   useEffect(() => {
@@ -94,6 +119,11 @@ export default function ServicesPage() {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
+  // Toggle FAQ expansion
+  const toggleFaq = (index: number) => {
+    setExpandedFaq(expandedFaq === index ? null : index);
+  };
+
   return (
     <main className="gradient-bg pt-32 pb-20">
       <div className="absolute inset-0 opacity-5 pointer-events-none">
@@ -137,11 +167,12 @@ export default function ServicesPage() {
               className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none"
               value={sortOption}
               onChange={handleSortChange}
+              style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
             >
-              <option value="default">Sort by: Default</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="duration">Duration: Short to Long</option>
+              <option value="default" style={{ color: "black", background: "white" }}>Sort by: Default</option>
+              <option value="price-low" style={{ color: "black", background: "white" }}>Price: Low to High</option>
+              <option value="price-high" style={{ color: "black", background: "white" }}>Price: High to Low</option>
+              <option value="duration" style={{ color: "black", background: "white" }}>Duration: Short to Long</option>
             </select>
           </div>
         </div>
@@ -200,6 +231,57 @@ export default function ServicesPage() {
               </Button>
             </div>
           )}
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-20">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-3 gradient-text">Frequently Asked Questions</h2>
+            <p className="text-white/80 max-w-2xl mx-auto">
+              Find answers to common questions about our services and booking process.
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            {faqItems.map((item, index) => (
+              <div 
+                key={index} 
+                className="mb-4 bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden transition-all duration-300"
+              >
+                <button 
+                  className="w-full p-4 text-left flex justify-between items-center"
+                  onClick={() => toggleFaq(index)}
+                >
+                  <h3 className="text-white font-medium text-lg">{item.question}</h3>
+                  <div className="bg-white/20 rounded-full p-1">
+                    {expandedFaq === index ? (
+                      <Minus size={18} className="text-white" />
+                    ) : (
+                      <Plus size={18} className="text-white" />
+                    )}
+                  </div>
+                </button>
+                {expandedFaq === index && (
+                  <div className="px-4 pb-4 text-white/80">
+                    <p>{item.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Contact CTA */}
+          <div className="text-center mt-10 bg-white/10 backdrop-blur-sm p-6 rounded-lg max-w-2xl mx-auto">
+            <h3 className="text-xl font-bold mb-2 text-white">Still have questions?</h3>
+            <p className="text-white/80 mb-4">
+              Our team is ready to help you with any other questions you may have about our services.
+            </p>
+            <Button 
+              className="bg-white text-primary hover:bg-white/90 shadow-md transition-all duration-200"
+            >
+              Contact Support
+            </Button>
+          </div>
         </div>
       </div>
     </main>
