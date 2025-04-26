@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { MessageSquare, Star, MapPin, Mail, Phone, Calendar, Shield, Clock } from "lucide-react";
+import { MessageSquare, Star, MapPin, Mail, Phone, Shield, Clock } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -52,9 +52,56 @@ export default function HomePage() {
             <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-300 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
             <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-orange-300 rounded-full filter blur-3xl opacity-20 animate-pulse delay-300"></div>
             <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-8 shadow-xl border border-white/10 h-[400px] flex items-center justify-center relative hover-scale">
-              <Calendar className="h-40 w-40 text-white opacity-80 absolute animate-bounce-slow" />
+              {/* 3D Calendar Effect */}
+              <div className="relative w-60 h-60 transform-gpu transition-all duration-1000 animate-float" style={{ perspective: "1000px", transformStyle: "preserve-3d" }}>
+                {/* Calendar Base */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#8c65df] to-[#5931a9] rounded-xl shadow-xl transform rotate-6 -rotate-y-12 z-10"></div>
+                
+                {/* Calendar Middle Pages */}
+                <div className="absolute inset-1 bg-white/90 rounded-lg shadow-inner transform rotate-2 -rotate-y-8 z-20"></div>
+                
+                {/* Calendar Top Page */}
+                <div className="absolute inset-2 bg-white rounded-lg shadow-md transform -rotate-1 -rotate-y-4 z-30 flex flex-col overflow-hidden">
+                  {/* Calendar Header */}
+                  <div className="bg-primary/80 text-white p-2 text-center font-bold text-lg">
+                    {new Date().toLocaleString('default', { month: 'long' })}
+                  </div>
+                  
+                  {/* Calendar Grid */}
+                  <div className="flex flex-col p-2 h-full">
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
+                      <div>Su</div>
+                      <div>Mo</div>
+                      <div>Tu</div>
+                      <div>We</div>
+                      <div>Th</div>
+                      <div>Fr</div>
+                      <div>Sa</div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 text-center flex-1">
+                      {[...Array(31)].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className={`text-xs rounded-sm flex items-center justify-center
+                            ${i + 1 === new Date().getDate() ? 'bg-accent text-white font-bold' : 
+                              i % 7 === 0 ? 'text-gray-400' : 'text-gray-700'}`}
+                        >
+                          {i + 1 <= 31 ? i + 1 : ''}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Decorative Elements */}
+                <div className="absolute -top-4 -right-4 w-8 h-8 bg-accent rounded-full shadow-lg z-40 flex items-center justify-center text-white text-xs font-bold">
+                  {new Date().getDate()}
+                </div>
+                <div className="absolute -bottom-2 -left-2 w-4 h-20 bg-gradient-to-b from-primary/50 to-primary rounded-l-lg shadow-md transform rotate-12 z-0"></div>
+              </div>
+              
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center z-10">
+                <div className="text-center z-50 backdrop-blur-sm bg-black/20 px-6 py-3 rounded-xl">
                   <p className="text-2xl font-bold text-white">Booking Simplified</p>
                   <p className="text-sm mt-2 text-white/80">Manage your services with ease</p>
                 </div>
@@ -112,11 +159,18 @@ export default function HomePage() {
       </section>
 
       {/* Service Preview Section */}
-      <section className="py-24 bg-gray-50">
+      <section className="relative py-32 gradient-bg text-white">
+        {/* Top wave shape */}
+        <div className="wave-shape-top">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
+          </svg>
+        </div>
+        
         <div className="container mx-auto">
           <div className="text-center mb-16 reveal">
-            <h2 className="text-4xl font-bold mb-4 gradient-text">Popular Services</h2>
-            <p className="text-slate-600 max-w-2xl mx-auto">
+            <h2 className="text-4xl font-bold mb-4 text-white">Popular Services</h2>
+            <p className="text-white/90 max-w-2xl mx-auto">
               Book appointments for a wide range of professional services with our easy-to-use platform.
             </p>
           </div>
@@ -127,20 +181,20 @@ export default function HomePage() {
                 <Link href={`/services/${service.id}`} className="absolute inset-0 z-10" aria-label={`View ${service.name} details`}>
                   <span className="sr-only">View {service.name} details</span>
                 </Link>
-                <Card className="h-full border-0 shadow-md card-hover">
+                <Card className="h-full border-0 shadow-md card-hover backdrop-blur-sm bg-white/10 border border-white/10">
                   <CardHeader>
-                    <CardTitle className="text-2xl">{service.name}</CardTitle>
-                    <CardDescription>{service.description}</CardDescription>
+                    <CardTitle className="text-2xl text-white">{service.name}</CardTitle>
+                    <CardDescription className="text-white/80">{service.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between text-sm text-slate-500">
+                    <div className="flex justify-between text-sm text-white/80">
                       <span>Duration: {service.duration}</span>
-                      <span className="font-medium text-primary">${service.price}</span>
+                      <span className="font-medium text-accent">${service.price}</span>
                     </div>
                   </CardContent>
-                  <CardFooter className="border-t pt-4 relative">
+                  <CardFooter className="border-t border-white/10 pt-4 relative">
                     <Button 
-                      className="w-full servify-btn-primary"
+                      className="w-full servify-btn-secondary"
                     >
                       Book Now
                     </Button>
@@ -152,7 +206,7 @@ export default function HomePage() {
           
           <div className="mt-12 text-center reveal">
             <Button 
-              className="mt-6 servify-btn-primary hover-glow"
+              className="mt-6 servify-btn-secondary hover-glow"
               asChild
             >
               <Link href="/services">
@@ -160,6 +214,13 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
+        </div>
+        
+        {/* Bottom wave shape */}
+        <div className="wave-shape">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
+          </svg>
         </div>
       </section>
 
@@ -216,7 +277,14 @@ export default function HomePage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-24 gradient-bg text-white relative">
+      <section className="py-32 pb-24 gradient-bg text-white relative">
+        {/* Top wave shape */}
+        <div className="wave-shape-top">
+          <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="shape-fill"></path>
+          </svg>
+        </div>
+
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-60 h-60 bg-white rounded-full animate-pulse"></div>
           <div className="absolute bottom-40 right-20 w-40 h-40 bg-white rounded-full animate-pulse delay-300"></div>

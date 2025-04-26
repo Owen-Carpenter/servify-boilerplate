@@ -170,6 +170,27 @@
   fill: #FFFFFF;
 }
 
+/* Top wave shape (inverted) */
+.wave-shape-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wave-shape-top svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 80px;
+}
+
+.wave-shape-top .shape-fill {
+  fill: #FFFFFF;
+}
+
 .card-hover {
   @apply transition-all duration-300;
 }
