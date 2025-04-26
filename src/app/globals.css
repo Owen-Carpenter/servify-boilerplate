@@ -162,8 +162,9 @@
 .wave-shape svg {
   position: relative;
   display: block;
-  width: calc(100% + 1.3px);
+  width: calc(150% + 1.3px);
   height: 80px;
+  animation: waveAnimation 15s linear infinite;
 }
 
 .wave-shape .shape-fill {
@@ -183,12 +184,23 @@
 .wave-shape-top svg {
   position: relative;
   display: block;
-  width: calc(100% + 1.3px);
+  width: calc(150% + 1.3px);
   height: 80px;
+  animation: waveAnimation 15s linear infinite reverse;
 }
 
 .wave-shape-top .shape-fill {
   fill: #FFFFFF;
+}
+
+/* Wave animation */
+@keyframes waveAnimation {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.33%);
+  }
 }
 
 .card-hover {
@@ -291,6 +303,54 @@
   }
 }
 
+/* New animation keyframes for booking calendar */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotation, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--rotation, 0deg));
+  }
+}
+
+@keyframes slide-up-fade {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-up {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.6s ease forwards;
 }
@@ -327,6 +387,26 @@
   animation: bounce 3s ease-in-out infinite;
 }
 
+/* New animation classes for booking calendar */
+.animate-ping-slow {
+  animation: ping-slow 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 5s ease-in-out infinite;
+  --rotation: var(--rotation, 0deg);
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-scale-up {
+  animation: scale-up 0.5s ease-out forwards;
+  transform: scale(0);
+}
+
 /* Animation delays */
 .delay-100 {
   animation-delay: 100ms;
@@ -346,6 +426,18 @@
 
 .delay-500 {
   animation-delay: 500ms;
+}
+
+.delay-700 {
+  animation-delay: 700ms;
+}
+
+.delay-1000 {
+  animation-delay: 1000ms;
+}
+
+.delay-2000 {
+  animation-delay: 2000ms;
 }
 
 /* Hover animations */

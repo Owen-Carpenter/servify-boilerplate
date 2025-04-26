@@ -51,59 +51,133 @@ export default function HomePage() {
           <div className="relative animate-fadeInRight">
             <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-300 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
             <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-orange-300 rounded-full filter blur-3xl opacity-20 animate-pulse delay-300"></div>
-            <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-8 shadow-xl border border-white/10 h-[400px] flex items-center justify-center relative hover-scale">
-              {/* 3D Calendar Effect */}
-              <div className="relative w-60 h-60 transform-gpu transition-all duration-1000 animate-float" style={{ perspective: "1000px", transformStyle: "preserve-3d" }}>
-                {/* Calendar Base */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8c65df] to-[#5931a9] rounded-xl shadow-xl transform rotate-6 -rotate-y-12 z-10"></div>
-                
-                {/* Calendar Middle Pages */}
-                <div className="absolute inset-1 bg-white/90 rounded-lg shadow-inner transform rotate-2 -rotate-y-8 z-20"></div>
-                
-                {/* Calendar Top Page */}
-                <div className="absolute inset-2 bg-white rounded-lg shadow-md transform -rotate-1 -rotate-y-4 z-30 flex flex-col overflow-hidden">
-                  {/* Calendar Header */}
-                  <div className="bg-primary/80 text-white p-2 text-center font-bold text-lg">
-                    {new Date().toLocaleString('default', { month: 'long' })}
+            <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-6 shadow-xl border border-white/10 h-[450px] flex items-center justify-center relative overflow-hidden">
+              {/* Animated Booking Calendar */}
+              <div className="w-full max-w-[360px] h-[380px] bg-white rounded-xl shadow-2xl overflow-hidden relative z-20">
+                {/* Calendar Header */}
+                <div className="bg-primary w-full p-4 text-white">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-xl">Book a Service</h3>
+                    <div className="flex items-center space-x-1">
+                      <button className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <span className="text-sm font-medium">October 2023</span>
+                      <button className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   
-                  {/* Calendar Grid */}
-                  <div className="flex flex-col p-2 h-full">
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
-                      <div>Su</div>
-                      <div>Mo</div>
-                      <div>Tu</div>
-                      <div>We</div>
-                      <div>Th</div>
-                      <div>Fr</div>
-                      <div>Sa</div>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1 text-center flex-1">
-                      {[...Array(31)].map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={`text-xs rounded-sm flex items-center justify-center
-                            ${i + 1 === new Date().getDate() ? 'bg-accent text-white font-bold' : 
-                              i % 7 === 0 ? 'text-gray-400' : 'text-gray-700'}`}
-                        >
-                          {i + 1 <= 31 ? i + 1 : ''}
-                        </div>
-                      ))}
-                    </div>
+                  {/* Week Days */}
+                  <div className="grid grid-cols-7 gap-1 mt-4 text-xs text-white/80">
+                    <div className="text-center">Sun</div>
+                    <div className="text-center">Mon</div>
+                    <div className="text-center">Tue</div>
+                    <div className="text-center">Wed</div>
+                    <div className="text-center">Thu</div>
+                    <div className="text-center">Fri</div>
+                    <div className="text-center">Sat</div>
                   </div>
                 </div>
                 
-                {/* Decorative Elements */}
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-accent rounded-full shadow-lg z-40 flex items-center justify-center text-white text-xs font-bold">
-                  {new Date().getDate()}
+                {/* Calendar Body */}
+                <div className="p-2 bg-white">
+                  {/* Calendar Days */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {/* Previous Month */}
+                    {[25, 26, 27, 28, 29, 30].map(day => (
+                      <div key={`prev-${day}`} className="aspect-square flex items-center justify-center text-gray-400 text-sm">
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {/* Current Month - First Row */}
+                    {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                      <div key={day} className={`aspect-square rounded-full flex items-center justify-center text-sm 
+                        ${day === 3 ? 'bg-accent text-white font-bold scale-110 transition-all duration-500 animate-pulse' : 'hover:bg-gray-100'}`}>
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {/* Current Month - Second Row */}
+                    {[8, 9, 10, 11, 12, 13, 14].map(day => (
+                      <div key={day} className={`aspect-square rounded-full flex items-center justify-center text-sm 
+                        ${day === 12 ? 'bg-primary text-white font-bold' : 'hover:bg-gray-100'}`}>
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {/* Rest of the days */}
+                    {[15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31].map(day => (
+                      <div key={day} className="aspect-square rounded-full flex items-center justify-center text-sm hover:bg-gray-100">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Time Slot Selection */}
+                  <div className="mt-4 p-2 border-t">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Available Times for Oct 12</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-800">09:00 AM</div>
+                      <div className="text-center py-1 px-2 bg-primary/10 rounded text-xs text-primary font-medium border border-primary/30 animate-pulse">10:30 AM</div>
+                      <div className="text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-800">12:00 PM</div>
+                      <div className="text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-800">01:30 PM</div>
+                      <div className="text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-800">03:00 PM</div>
+                      <div className="text-center py-1 px-2 bg-gray-100 rounded text-xs text-gray-800">04:30 PM</div>
+                    </div>
+                  </div>
+                  
+                  {/* Selected Service */}
+                  <div className="mt-4 px-3 py-2 bg-gray-50 rounded-lg flex items-center justify-between">
+                    <div>
+                      <h5 className="font-medium text-sm text-gray-900">Business Consultation</h5>
+                      <p className="text-xs text-gray-500">60 min • $150</p>
+                    </div>
+                    <span className="px-2 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">Selected</span>
+                  </div>
+                  
+                  {/* Book Button */}
+                  <button className="mt-4 w-full py-2 bg-primary text-white rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Confirm Booking
+                  </button>
                 </div>
-                <div className="absolute -bottom-2 -left-2 w-4 h-20 bg-gradient-to-b from-primary/50 to-primary rounded-l-lg shadow-md transform rotate-12 z-0"></div>
+                
+                {/* Animated Elements */}
+                <div className="absolute -top-10 -right-10 w-20 h-20 bg-accent rounded-full opacity-30 animate-ping-slow"></div>
+                <div className="absolute -bottom-5 -left-5 w-10 h-10 bg-primary rounded-full opacity-20 animate-ping-slow delay-1000"></div>
               </div>
               
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center z-50 backdrop-blur-sm bg-black/20 px-6 py-3 rounded-xl">
-                  <p className="text-2xl font-bold text-white">Booking Simplified</p>
-                  <p className="text-sm mt-2 text-white/80">Manage your services with ease</p>
+              {/* Floating Service Cards */}
+              <div className="absolute top-16 -left-10 w-48 h-auto p-3 bg-white rounded-lg shadow-lg transform rotate-[-15deg] z-10 animate-float-slow">
+                <h4 className="font-semibold text-sm text-gray-900">Hair Styling</h4>
+                <p className="text-xs text-gray-500 mb-2">Professional hair styling services</p>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-primary font-medium">$85</span>
+                  <span className="text-gray-500">45 min</span>
+                </div>
+              </div>
+              
+              <div className="absolute bottom-20 -right-14 w-48 h-auto p-3 bg-white rounded-lg shadow-lg transform rotate-[10deg] z-10 animate-float-slow delay-700">
+                <h4 className="font-semibold text-sm text-gray-900">Home Cleaning</h4>
+                <p className="text-xs text-gray-500 mb-2">Professional cleaning services</p>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-primary font-medium">$120</span>
+                  <span className="text-gray-500">120 min</span>
+                </div>
+              </div>
+              
+              {/* Confirmation Check Animation */}
+              <div className="absolute -bottom-2 -right-2 w-20 h-20 overflow-hidden">
+                <div className="animate-slide-up-fade delay-2000 bg-accent/80 w-full h-full rounded-full flex items-center justify-center">
+                  <svg className="w-10 h-10 text-white animate-scale-up delay-2000" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"></path>
+                  </svg>
                 </div>
               </div>
             </div>
