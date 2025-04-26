@@ -6,26 +6,49 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown } from "lucide-react";
 import { initScrollAnimations } from "@/lib/scroll-animations";
-import { mockServices, Service } from "@/lib/services";
-
-// Get unique categories from the imported mockServices
-const categories = ["all", ...Array.from(new Set(mockServices.map(service => service.category)))];
+import { Service } from "@/lib/services";
+import { getServices } from "@/lib/supabase-services";
 
 export default function ServicesPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("default");
-  const [filteredServices, setFilteredServices] = useState<Service[]>(mockServices);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [allServices, setAllServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<string[]>(["all"]);
+  const [loading, setLoading] = useState(true);
   
   // Initialize scroll animations - only on initial mount
   useEffect(() => {
     const cleanup = initScrollAnimations();
     return cleanup;
   }, []);
+
+  // Fetch services from Supabase
+  useEffect(() => {
+    async function fetchServices() {
+      setLoading(true);
+      try {
+        const services = await getServices();
+        setAllServices(services);
+        
+        // Extract unique categories
+        const uniqueCategories = ["all", ...Array.from(new Set(services.map(service => service.category)))];
+        setCategories(uniqueCategories);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        setLoading(false);
+      }
+    }
+    
+    fetchServices();
+  }, []);
   
   // Apply filtering and sorting whenever dependencies change
   useEffect(() => {
     // Start with all services
-    let result = [...mockServices];
+    let result = [...allServices];
     
     // Filter by category (case-insensitive comparison for safety)
     if (activeCategory !== "all") {
@@ -43,8 +66,8 @@ export default function ServicesPage() {
           return b.price - a.price;
         case "duration":
           // Extract numeric values from duration strings (e.g., "60 min" → 60)
-          const durationA = parseInt(a.duration.split(" ")[0]);
-          const durationB = parseInt(b.duration.split(" ")[0]);
+          const durationA = parseInt(a.time.split(" ")[0]);
+          const durationB = parseInt(b.time.split(" ")[0]);
           return durationA - durationB;
         default:
           return 0;
@@ -53,7 +76,7 @@ export default function ServicesPage() {
     
     // Update state with filtered & sorted services
     setFilteredServices(result);
-  }, [activeCategory, sortOption]);
+  }, [activeCategory, sortOption, allServices]);
   
   // Handle category change
   const handleCategoryChange = (category: string) => {
@@ -125,15 +148,19 @@ export default function ServicesPage() {
 
         {/* Services Grid - SIMPLIFIED ANIMATIONS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.length > 0 ? (
+          {loading ? (
+            <div className="col-span-3 flex justify-center items-center py-20">
+              <div className="text-white text-lg">Loading services...</div>
+            </div>
+          ) : filteredServices.length > 0 ? (
             filteredServices.map((service) => (
               <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300">
                 <Card className="h-full border-0 shadow-lg bg-white/95 backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-xl gradient-text">{service.name}</CardTitle>
-                        <CardDescription className="mt-1">{service.description}</CardDescription>
+                        <CardTitle className="text-xl gradient-text">{service.title}</CardTitle>
+                        <CardDescription className="mt-1">{service.details}</CardDescription>
                       </div>
                       <span className="text-xs px-2 py-1 bg-primary/10 rounded-full text-primary">
                         {formatCategoryName(service.category)}
@@ -144,7 +171,7 @@ export default function ServicesPage() {
                     <div className="flex justify-between text-sm text-muted-foreground mt-2">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1 text-primary" />
-                        <span>{service.duration}</span>
+                        <span>{service.time}</span>
                       </div>
                       <div className="flex items-center font-medium text-foreground">
                         <DollarSign className="h-4 w-4 mr-1 text-primary" />
