@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: Request) {
   try {
     // Get the current session to check if the user is authenticated
     const session = await getServerSession();
+    
+    // Debug logging
+    console.log("Session state:", {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      userRole: session?.user?.role
+    });
     
     // Parse booking data from request
     const bookingData = await req.json();
@@ -13,8 +27,15 @@ export async function POST(req: Request) {
     // For demo purposes: Log the booking data
     console.log("Booking Request:", bookingData);
     
-    // Use session data if available (authentication check)
-    const userId = session?.user?.id || 'guest-user';
+    // Get user ID from the booking data (passed from frontend) or session
+    const userId = bookingData.userId || session?.user?.id;
+    
+    if (!userId) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "User ID is required" 
+      }, { status: 400 });
+    }
     
     // Create a unique booking ID
     const bookingId = `booking-${Date.now()}`;
@@ -23,11 +44,6 @@ export async function POST(req: Request) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
       apiVersion: "2025-03-31.basil",
     });
-    
-    // In a real application, we would:
-    // 1. Validate the booking data
-    // 2. Check if the time slot is available
-    // 3. Store the booking in a database (Supabase)
     
     // Get the host from the request
     const host = req.headers.get("host") || "localhost:3000";
@@ -54,6 +70,7 @@ export async function POST(req: Request) {
         bookingId,
         userId,
         serviceId: bookingData.serviceId,
+        serviceName: bookingData.serviceName,
         date: bookingData.date ? new Date(bookingData.date).toISOString() : "",
         time: bookingData.time || "",
       },
@@ -61,6 +78,71 @@ export async function POST(req: Request) {
       success_url: `${baseUrl}/booking/success?sessionId={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/booking/cancel?sessionId={CHECKOUT_SESSION_ID}`,
     });
+    
+    // First check if user exists in our users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+      
+    console.log("User check result:", { userData, userError });
+      
+    // If user doesn't exist in our custom users table, we need to add them
+    if (userError && !userData) {
+      console.log("Attempting to create user...");
+      const { error: createUserError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: session?.user?.email || '',
+          name: session?.user?.name || session?.user?.email?.split('@')[0] || '',
+          role: 'customer'
+        });
+        
+      if (createUserError) {
+        console.error("Error creating user:", createUserError);
+        return NextResponse.json({
+          success: false,
+          message: "Failed to create user account"
+        }, { status: 500 });
+      }
+      console.log("User created successfully");
+    }
+    
+    // Save the booking to Supabase with pending status
+    console.log("Attempting to save booking...");
+    const { error } = await supabase
+      .from('bookings')
+      .insert({
+        id: bookingId,
+        user_id: userId,
+        service_id: bookingData.serviceId,
+        service_name: bookingData.serviceName,
+        appointment_date: bookingData.date,
+        appointment_time: bookingData.time,
+        status: 'pending',
+        payment_status: 'pending',
+        payment_intent: stripeSession.id,
+        amount_paid: bookingData.price || 0
+      });
+      
+    if (error) {
+      console.error("Error saving booking to database:", error);
+      // If we get a foreign key violation, it's likely because the user doesn't exist in users table
+      if (error.code === '23503') {  // Foreign key violation
+        return NextResponse.json({
+          success: false,
+          message: "User account issue. Please contact support."
+        }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: false,
+        message: "Failed to save booking to database"
+      }, { status: 500 });
+    }
+    
+    console.log("Booking saved successfully");
     
     // Return the Stripe session URL for redirection
     return NextResponse.json({ 

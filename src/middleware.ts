@@ -4,19 +4,26 @@ import type { NextRequest } from 'next/server'
 // Public routes that don't require authentication
 const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify', '/auth/error']
 
+// Public API routes that don't require authentication
+const publicApiRoutes = ['/api/auth']
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // Check if the path is a public route or api route or static file
+  // Check if the path is a public route or static file
   const isPublicRoute = publicRoutes.some(route => 
     pathname === route || 
-    pathname.startsWith('/api/') || 
     pathname.includes('/_next/') || 
     pathname.includes('/favicon.ico')
   )
   
-  // If requesting a public path, allow the request to proceed
-  if (isPublicRoute) {
+  // Check if the path is a public API route
+  const isPublicApiRoute = publicApiRoutes.some(route => 
+    pathname.startsWith(route)
+  )
+  
+  // If requesting a public path or public API route, allow the request to proceed
+  if (isPublicRoute || isPublicApiRoute) {
     return NextResponse.next()
   }
   
@@ -44,8 +51,7 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
-     * - api routes (API endpoints)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 } 
