@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     }
 
     // Check if user is authorized to view this booking
-    // Either they are the owner of the booking or they are an admin
+    // Either they are the owner of the booking, an admin, or they have the valid stripe session ID
     const { data: userData } = await supabase
       .from('users')
       .select('role')
@@ -68,8 +68,12 @@ export async function GET(req: Request) {
 
     const isAdmin = userData?.role === 'admin';
     const isOwner = session?.user?.id === userId;
+    
+    // Allow access if: user is admin, or user is the booking owner, or they have the correct session ID
+    // The fact that they have a valid sessionId from Stripe means they went through the checkout process
+    const hasValidStripeSession = !!stripeSession.id;
 
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin && !isOwner && !hasValidStripeSession) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 }

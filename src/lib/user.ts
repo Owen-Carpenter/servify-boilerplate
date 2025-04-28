@@ -1,4 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/auth";
 
 // User role
 export type UserRole = 'user' | 'provider' | 'admin';
@@ -25,7 +26,7 @@ export interface User {
     zipCode?: string;
     country?: string;
   };
-  // Optional payment information (in a real app, this would be stored securely)
+  // Payment information
   paymentMethods?: Array<{
     id: string;
     type: string;
@@ -35,77 +36,110 @@ export interface User {
   }>;
 }
 
-// Helper function to create a valid date or fallback to current date
-function createValidDate(dayOffset: number): Date {
-  try {
-    return new Date(Date.now() + 86400000 * dayOffset);
-  } catch (error) {
-    console.error("Error creating date with offset", dayOffset, error);
-    return new Date(); // Fallback to current date
-  }
-}
-
-// Sample user data (in a real app, this would be fetched from an API)
-const mockUser: User = {
-  id: "user-1",
-  name: "Alex Johnson",
-  email: "alex.johnson@example.com",
-  role: "user",
-  phone: "+1 (555) 123-4567",
-  createdAt: createValidDate(-90), // 3 months ago
-  lastLoginAt: createValidDate(-0.5), // 12 hours ago
-  preferences: {
-    notifications: true,
-    emailUpdates: true,
-    darkMode: false
-  },
-  address: {
-    street: "123 Main St",
-    city: "San Francisco",
-    state: "CA",
-    zipCode: "94105",
-    country: "USA"
-  },
-  paymentMethods: [
-    {
-      id: "pm-1",
-      type: "visa",
-      lastFour: "4242",
-      expiryDate: "09/25",
-      isDefault: true
-    },
-    {
-      id: "pm-2",
-      type: "mastercard",
-      lastFour: "5678",
-      expiryDate: "12/24",
-      isDefault: false
-    }
-  ]
-};
-
 /**
- * Get the current user's profile
- * In a real app, this would fetch from an API with authentication
+ * Get the current user's profile from Supabase
  */
-export async function getUserProfile(): Promise<User> {
-  // Simulate API call delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Ensure dates are valid before returning
-      const validatedUser = {
-        ...mockUser,
-        createdAt: mockUser.createdAt instanceof Date && !isNaN(mockUser.createdAt.getTime())
-          ? mockUser.createdAt
-          : new Date(),
-        lastLoginAt: mockUser.lastLoginAt instanceof Date && !isNaN(mockUser.lastLoginAt.getTime())
-          ? mockUser.lastLoginAt
-          : new Date()
+export async function getUserProfile(): Promise<User | null> {
+  try {
+    // Get current authenticated user
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    if (!authUser) {
+      console.error("No authenticated user found");
+      return null;
+    }
+    
+    // Get user profile from users table
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+    
+    if (!data) {
+      // If user doesn't exist in our users table, create a basic profile
+      const newUser = {
+        id: authUser.id,
+        name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+        email: authUser.email || '',
+        role: 'user' as UserRole,
+        phone: '',
+        created_at: authUser.created_at,
+        last_login_at: authUser.last_sign_in_at,
+        preferences: {
+          notifications: true,
+          emailUpdates: true,
+          darkMode: false
+        },
+        address: {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: ''
+        }
       };
       
-      resolve(validatedUser);
-    }, 600);
-  });
+      // Insert new user
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert(newUser);
+      
+      if (insertError) {
+        console.error("Error creating user profile:", insertError);
+        return null;
+      }
+      
+      // Use the newly created user data
+      return {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        avatar: authUser.user_metadata?.avatar_url,
+        phone: newUser.phone,
+        createdAt: new Date(newUser.created_at || Date.now()),
+        lastLoginAt: new Date(newUser.last_login_at || Date.now()),
+        preferences: newUser.preferences,
+        address: newUser.address,
+        paymentMethods: []
+      };
+    }
+    
+    // Map the Supabase user to our User interface
+    return {
+      id: data.id,
+      name: data.name || authUser.user_metadata?.full_name || 'User',
+      email: data.email || authUser.email || '',
+      role: (data.role || 'user') as UserRole,
+      phone: data.phone || '',
+      avatar: authUser.user_metadata?.avatar_url,
+      createdAt: new Date(data.created_at || authUser.created_at || Date.now()),
+      lastLoginAt: new Date(data.last_login_at || authUser.last_sign_in_at || Date.now()),
+      preferences: {
+        notifications: data.preferences?.notifications ?? true,
+        emailUpdates: data.preferences?.emailUpdates ?? true,
+        darkMode: data.preferences?.darkMode ?? false
+      },
+      address: data.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      },
+      // Real payment methods would be fetched from a payment provider like Stripe
+      paymentMethods: data.payment_methods || []
+    };
+  } catch (error) {
+    console.error("Error in getUserProfile:", error);
+    return null;
+  }
 }
 
 /**
@@ -113,31 +147,59 @@ export async function getUserProfile(): Promise<User> {
  * @param userData Partial user data to update
  * @returns The updated user
  */
-export async function updateUserProfile(userData: Partial<User>): Promise<User> {
-  // Simulate API call delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Update the user data
-      Object.assign(mockUser, userData);
-
-      // Validate dates after update
-      if (mockUser.createdAt && (!(mockUser.createdAt instanceof Date) || isNaN(mockUser.createdAt.getTime()))) {
-        mockUser.createdAt = new Date();
-      }
-      
-      if (mockUser.lastLoginAt && (!(mockUser.lastLoginAt instanceof Date) || isNaN(mockUser.lastLoginAt.getTime()))) {
-        mockUser.lastLoginAt = new Date();
-      }
-
+export async function updateUserProfile(userData: Partial<User>): Promise<User | null> {
+  try {
+    // Get current authenticated user
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    if (!authUser) {
+      console.error("No authenticated user found");
+      return null;
+    }
+    
+    // Format the data to update
+    const updateData = {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      address: userData.address,
+      preferences: userData.preferences,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Update the user data in Supabase
+    const { error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', authUser.id);
+    
+    if (error) {
+      console.error("Error updating user profile:", error);
       toast({
-        variant: "success",
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated",
+        variant: "destructive",
+        title: "Error Updating Profile",
+        description: "There was a problem updating your profile.",
       });
+      return null;
+    }
+    
+    toast({
+      variant: "success",
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated",
+    });
 
-      resolve(mockUser);
-    }, 800);
-  });
+    // Return the updated user
+    return getUserProfile();
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "There was a problem updating your profile.",
+    });
+    return null;
+  }
 }
 
 /**
@@ -147,23 +209,67 @@ export async function updateUserProfile(userData: Partial<User>): Promise<User> 
  */
 export async function updateUserPreferences(
   preferences: Partial<User["preferences"]>
-): Promise<User> {
-  // Simulate API call delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Update only the preferences
-      mockUser.preferences = {
-        ...mockUser.preferences,
-        ...preferences,
-      };
-
+): Promise<User | null> {
+  try {
+    // Get current authenticated user
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    if (!authUser) {
+      console.error("No authenticated user found");
+      return null;
+    }
+    
+    // Get current preferences
+    const { data, error: fetchError } = await supabase
+      .from('users')
+      .select('preferences')
+      .eq('id', authUser.id)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error fetching user preferences:", fetchError);
+      return null;
+    }
+    
+    // Update the preferences
+    const updatedPreferences = {
+      ...(data?.preferences || {
+        notifications: true,
+        emailUpdates: true,
+        darkMode: false
+      }),
+      ...preferences,
+    };
+    
+    const { error } = await supabase
+      .from('users')
+      .update({ preferences: updatedPreferences })
+      .eq('id', authUser.id);
+    
+    if (error) {
+      console.error("Error updating user preferences:", error);
       toast({
-        variant: "success",
-        title: "Preferences Updated",
-        description: "Your preferences have been saved",
+        variant: "destructive",
+        title: "Error",
+        description: "There was a problem updating your preferences.",
       });
+      return null;
+    }
 
-      resolve(mockUser);
-    }, 600);
-  });
+    toast({
+      variant: "success",
+      title: "Preferences Updated",
+      description: "Your preferences have been saved",
+    });
+
+    return getUserProfile();
+  } catch (error) {
+    console.error("Error in updateUserPreferences:", error);
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "There was a problem updating your preferences.",
+    });
+    return null;
+  }
 } 

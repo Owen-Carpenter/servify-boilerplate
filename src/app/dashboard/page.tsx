@@ -7,37 +7,100 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getAppointments, cancelAppointment, type Appointment } from "@/lib/appointments";
-import { Loader2, Calendar, Clock, Home, BadgeCheck, AlertTriangle, X, User as UserIcon, Trash2, Pencil } from "lucide-react";
+import { Loader2, Calendar, Clock, Home, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil } from "lucide-react";
 import { getUnreadUpdates, markUpdateAsRead, type Update } from "@/lib/updates";
 import { format } from "date-fns";
-import { getUserProfile, type User } from "@/lib/user";
+import { type User, type UserRole } from "@/lib/user";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
-import Link from "next/link";
+import { getBookingCountsByStatus } from "@/lib/supabase-bookings";
+import { useSession } from "next-auth/react";
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [profile, setProfile] = useState<User | null>(null);
   const [updates, setUpdates] = useState<Update[]>([]);
   const router = useRouter();
-  const [isCompletedShown, setIsCompletedShown] = useState(false);
+  const [bookingCounts, setBookingCounts] = useState({
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0
+  });
+
+  // Group appointments by status
+  const upcomingAppointments = appointments.filter(app => app.status === 'confirmed' || app.status === 'pending');
+  const pastAppointments = appointments.filter(app => app.status === 'completed' || app.status === 'cancelled');
 
   useEffect(() => {
     async function loadData() {
       try {
-        // Get user data
-        const profileData = await getUserProfile();
-        if (profileData) {
-          setProfile(profileData);
+        // Use NextAuth session for user info
+        if (status === "loading") return;
+        if (!session || !session.user) {
+          setProfile(null);
+          setIsLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Please log in to view your dashboard.",
+          });
+          return;
+        }
+
+        // Ensure we have a user ID
+        const userId = session.user.id;
+        if (!userId) {
+          console.error("No user ID found in session");
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Unable to load user data. Please try logging in again.",
+          });
+          return;
         }
         
-        // Get appointments
-        const appData = await getAppointments();
-        if (appData && Array.isArray(appData)) {
-          setAppointments(appData);
+        // Build a profile object from session.user
+        let phone: string = "";
+        if (typeof session.user === "object" && session.user !== null && "phone" in session.user) {
+          phone = (session.user as { phone?: string }).phone || "";
         }
+        setProfile({
+          id: userId,
+          name: session.user.name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email || "",
+          role: (session.user.role as UserRole) || "user",
+          avatar: session.user.image || undefined,
+          phone,
+          createdAt: new Date(),
+          lastLoginAt: new Date(),
+          preferences: {
+            notifications: true,
+            emailUpdates: true,
+            darkMode: false
+          },
+          address: undefined,
+          paymentMethods: []
+        });
+        
+        // Get appointments - explicitly pass the user ID from NextAuth session
+        console.log("Fetching appointments for user:", userId);
+        const appData = await getAppointments(userId);
+        if (appData && Array.isArray(appData)) {
+          console.log("Fetched appointments:", appData);
+          setAppointments(appData);
+        } else {
+          console.error("Invalid appointment data received:", appData);
+        }
+        
+        // Get booking counts directly from Supabase - explicitly pass the user ID
+        console.log("Fetching booking counts for user:", userId);
+        const counts = await getBookingCountsByStatus(userId);
+        console.log("Fetched booking counts:", counts);
+        setBookingCounts(counts);
         
         // Get updates/notifications
         const updateData = await getUnreadUpdates();
@@ -46,17 +109,23 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "There was a problem loading your dashboard data.",
+        });
       } finally {
         setIsLoading(false);
       }
     }
     
     loadData();
-  }, []);
+    // Only rerun when session or status changes
+  }, [session, status]);
 
   const handleCancelAppointment = async (appointmentId: string) => {
     try {
-      await cancelAppointment(appointmentId);
+      await cancelAppointment(appointmentId, session?.user?.id);
       setAppointments(appointments.filter(app => app.id !== appointmentId));
       toast({
         title: "Appointment cancelled",
@@ -81,7 +150,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (isLoading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
         <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
@@ -89,6 +158,19 @@ export default function DashboardPage() {
             <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
             <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
             <p className="text-muted-foreground mt-2">Please wait while we fetch your data</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!session || !session.user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
+        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <h2 className="text-xl font-semibold mb-4">You are not logged in</h2>
+            <Button onClick={() => router.push("/auth/login")}>Go to Login</Button>
           </CardContent>
         </Card>
       </div>
@@ -105,11 +187,13 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        {/* Welcome Section */}
+        {/* Welcome Section with User Summary */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 z-10 relative">
           <div>
             <h1 className="text-3xl font-bold text-white">Welcome back, {profile?.name || 'User'}</h1>
-            <p className="text-white/80 mt-1">Here&apos;s what&apos;s happening with your services today</p>
+            <p className="text-white/80 mt-1">
+              You have {upcomingAppointments.length} upcoming {upcomingAppointments.length === 1 ? 'appointment' : 'appointments'}
+            </p>
           </div>
           <Button 
             onClick={() => router.push('/services')}
@@ -156,8 +240,11 @@ export default function DashboardPage() {
         )}
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="appointments" className="w-full z-10 relative">
-          <TabsList className="grid w-full max-w-md grid-cols-3 mx-auto bg-white/20 backdrop-blur-sm">
+        <Tabs defaultValue="overview" className="w-full z-10 relative">
+          <TabsList className="grid w-full max-w-md grid-cols-4 mx-auto bg-white/20 backdrop-blur-sm">
+            <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
               Appointments
             </TabsTrigger>
@@ -169,87 +256,247 @@ export default function DashboardPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Appointments Tab */}
-          <TabsContent value="appointments" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {appointments.length > 0 ? (
-                appointments.map((appointment) => (
-                  <Card key={appointment.id} className="backdrop-blur-sm bg-white/90 shadow-md border-0 overflow-hidden">
-                    <CardHeader className="bg-primary/5 border-b">
+          {/* Overview Tab - New tab with summary */}
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* User Profile Summary Card */}
+              <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                <CardHeader className="bg-primary/5 border-b flex flex-row items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={profile?.avatar || ""} />
+                    <AvatarFallback className="text-xl bg-primary text-white">
+                      {profile?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle>{profile?.name || "User"}</CardTitle>
+                    <CardDescription>{profile?.email || ""}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center">
+                    <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Member since {profile?.createdAt ? format(new Date(profile.createdAt), 'MMMM yyyy') : 'N/A'}</span>
+                  </div>
+                  {profile?.phone && (
+                    <div className="flex items-center">
+                      <svg className="h-4 w-4 mr-2 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      <span>{profile.phone}</span>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-center p-4 bg-secondary/10">
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-white"
+                    onClick={() => router.push('/profile/edit')}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    View Full Profile
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Next Appointment Card */}
+              <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                <CardHeader className="bg-primary/5 border-b">
+                  <CardTitle className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-primary" />
+                    Next Appointment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {upcomingAppointments.length > 0 ? (
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{appointment.serviceName || 'Service'}</CardTitle>
+                        <h3 className="font-semibold text-lg">{upcomingAppointments[0].serviceName}</h3>
                         <Badge className={
-                          appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          upcomingAppointments[0].status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }>
-                          {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                          {upcomingAppointments[0].status.charAt(0).toUpperCase() + upcomingAppointments[0].status.slice(1)}
                         </Badge>
                       </div>
-                      <CardDescription>
-                        Booked on {format(new Date(appointment.bookingDate), 'MMM d, yyyy')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{format(new Date(appointment.date), 'EEEE, MMMM d, yyyy')}</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{format(new Date(upcomingAppointments[0].date), 'EEEE, MMMM d, yyyy')}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{upcomingAppointments[0].time} ({upcomingAppointments[0].duration})</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Home className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{upcomingAppointments[0].location}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{appointment.time}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <Calendar className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground">No upcoming appointments</p>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-between gap-2 p-4 bg-secondary/10">
+                  {upcomingAppointments.length > 0 ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 bg-white"
+                        onClick={() => router.push(`/appointments/${upcomingAppointments[0].id}`)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 bg-white"
+                        onClick={() => router.push('/services')}
+                      >
+                        View All
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      className="w-full"
+                      onClick={() => router.push('/services')}
+                    >
+                      Book a Service
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+
+              {/* Stats Card */}
+              <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                <CardHeader className="bg-primary/5 border-b">
+                  <CardTitle>Your Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-muted-foreground text-sm">Upcoming</p>
+                        <p className="text-2xl font-bold">{bookingCounts.pending + bookingCounts.confirmed}</p>
                       </div>
-                      <div className="flex items-center">
-                        <Home className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{appointment.location}</span>
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Calendar className="h-6 w-6 text-primary" />
                       </div>
-                    </CardContent>
-                    <CardFooter className="bg-secondary/10 flex justify-between gap-2 p-4">
-                      {appointment.status !== 'cancelled' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 bg-white"
-                            onClick={() => router.push(`/appointments/${appointment.id}`)}
-                          >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Details
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                            onClick={() => handleCancelAppointment(appointment.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Cancel
-                          </Button>
-                        </>
-                      )}
-                      {appointment.status === 'cancelled' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => router.push('/services')}
-                        >
-                          Book Again
-                        </Button>
-                      )}
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <Card className="col-span-full backdrop-blur-sm bg-white/90 shadow-md border-0 overflow-hidden">
-                  <CardContent className="flex flex-col items-center text-center p-6">
-                    <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No upcoming appointments</h3>
-                    <p className="text-muted-foreground mb-4">You don&apos;t have any scheduled appointments at the moment.</p>
-                    <Button onClick={() => router.push('/services')}>Book a Service</Button>
-                  </CardContent>
-                </Card>
-              )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-muted-foreground text-sm">Completed</p>
+                        <p className="text-2xl font-bold">{bookingCounts.completed}</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <BadgeCheck className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-muted-foreground text-sm">Cancelled</p>
+                        <p className="text-2xl font-bold">{bookingCounts.cancelled}</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <X className="h-6 w-6 text-red-600" />
+                      </div>
+                    </div>
+
+                    {(bookingCounts.pending + bookingCounts.confirmed + bookingCounts.completed + bookingCounts.cancelled) === 0 && (
+                      <div className="text-center mt-4 p-2 bg-blue-50 rounded-md text-sm text-blue-700">
+                        No booking activity yet. Browse services to make your first booking!
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-center p-4 bg-secondary/10">
+                  <Button
+                    variant="outline"
+                    className="w-full bg-white"
+                    onClick={() => router.push('/services')}
+                  >
+                    {(bookingCounts.pending + bookingCounts.confirmed + bookingCounts.completed + bookingCounts.cancelled) > 0 
+                      ? "View History" 
+                      : "Browse Services"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Appointments Tab */}
+          <TabsContent value="appointments" className="mt-6">
+            <div className="space-y-6">
+              <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                <CardHeader className="bg-primary/5 border-b">
+                  <CardTitle>Upcoming Appointments</CardTitle>
+                  <CardDescription>Your scheduled services</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {upcomingAppointments.length > 0 ? (
+                    <div className="divide-y">
+                      {upcomingAppointments.map((appointment) => (
+                        <div key={appointment.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                          <div className="sm:mr-4">
+                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Calendar className="h-6 w-6 text-primary" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-lg">{appointment.serviceName || 'Service'}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {format(new Date(appointment.date), 'EEEE, MMMM d, yyyy')} • {appointment.time}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {appointment.providerName} • {appointment.location}
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
+                            <Badge className={
+                              appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }>
+                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                            </Badge>
+                            <div className="flex gap-2 mt-2 sm:mt-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-white"
+                                onClick={() => router.push(`/appointments/${appointment.id}`)}
+                              >
+                                Details
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                onClick={() => handleCancelAppointment(appointment.id)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center p-8">
+                      <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No upcoming appointments</h3>
+                      <p className="text-muted-foreground mb-4">You don&apos;t have any scheduled appointments at the moment.</p>
+                      <Button onClick={() => router.push('/services')}>Book a Service</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -281,6 +528,27 @@ export default function DashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-1">Address</h3>
                     <p>{profile?.address?.street ? `${profile.address.street}, ${profile.address.city}, ${profile.address.state}` : 'Not provided'}</p>
+                  </div>
+                  {/* Payment Methods */}
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Payment Methods</h3>
+                    {profile?.paymentMethods && profile.paymentMethods.length > 0 ? (
+                      <div className="space-y-2">
+                        {profile.paymentMethods.map((method) => (
+                          <div key={method.id} className="flex items-center justify-between p-2 bg-secondary/10 rounded-md">
+                            <div className="flex items-center">
+                              <div className="mr-2 capitalize">{method.type}</div>
+                              <div className="text-sm text-muted-foreground">**** {method.lastFour}</div>
+                            </div>
+                            {method.isDefault && (
+                              <Badge variant="outline" className="text-xs">Default</Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>No payment methods saved</p>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-center p-4 bg-secondary/10">
@@ -360,7 +628,7 @@ export default function DashboardPage() {
           
           {/* History Tab */}
           <TabsContent value="history" className="mt-6">
-            {appointments.filter(app => app.status === 'completed' || app.status === 'cancelled').length > 0 ? (
+            {pastAppointments.length > 0 ? (
               <div className="space-y-6">
                 <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                   <CardHeader className="bg-primary/5 border-b">
@@ -369,45 +637,39 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="divide-y">
-                      {appointments
-                        .filter(app => app.status === 'completed' || app.status === 'cancelled')
-                        .map((appointment) => (
-                          <div key={appointment.id} className="p-4 flex items-center">
-                            <div className="mr-4">
-                              {appointment.status === 'completed' ? (
-                                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                  <BadgeCheck className="h-5 w-5 text-green-600" />
-                                </div>
-                              ) : (
-                                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                                  <X className="h-5 w-5 text-red-600" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-medium">{appointment.serviceName || 'Service'}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {format(new Date(appointment.date), 'MMM d, yyyy')} • {appointment.time}
+                      {pastAppointments.map((appointment) => (
+                        <div key={appointment.id} className="p-4 flex items-center">
+                          <div className="mr-4">
+                            {appointment.status === 'completed' ? (
+                              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                <BadgeCheck className="h-5 w-5 text-green-600" />
                               </div>
-                            </div>
-                            <Badge className={
-                              appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'
-                            }>
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                            </Badge>
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                                <X className="h-5 w-5 text-red-600" />
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          <div className="flex-1">
+                            <div className="font-medium">{appointment.serviceName || 'Service'}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {format(new Date(appointment.date), 'MMM d, yyyy')} • {appointment.time}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {appointment.providerName} • {appointment.location}
+                            </div>
+                          </div>
+                          <Badge className={
+                            appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'
+                          }>
+                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
-                <Button
-                  onClick={() => setIsCompletedShown(!isCompletedShown)}
-                  size="sm"
-                  className={isCompletedShown ? "servify-btn-primary" : "servify-btn-secondary"}
-                >
-                  {isCompletedShown ? "Hide Completed" : "Show Completed"}
-                </Button>
               </div>
             ) : (
               <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">

@@ -1,4 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
+import { getUserBookings, cancelBooking as cancelSupabaseBooking, SupabaseBooking } from "./supabase-bookings";
 
 // Appointment statuses
 export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
@@ -19,161 +20,112 @@ export interface Appointment {
   category: string;
 }
 
-// Helper function to create a valid date or fallback to current date
-function createValidDate(dayOffset: number): Date {
+// Convert Supabase booking to our Appointment interface
+function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment {
+  // Try to parse the appointment date, fallback to current date if it fails
+  let appointmentDate: Date;
   try {
-    return new Date(Date.now() + 86400000 * dayOffset);
-  } catch (error) {
-    console.error("Error creating date with offset", dayOffset, error);
-    return new Date(); // Fallback to current date
+    appointmentDate = new Date(booking.appointment_date);
+    if (isNaN(appointmentDate.getTime())) {
+      appointmentDate = new Date();
+    }
+  } catch {
+    appointmentDate = new Date();
   }
+  
+  // Try to parse the booking date, fallback to current date if it fails
+  let bookingDate: Date;
+  try {
+    bookingDate = new Date(booking.created_at);
+    if (isNaN(bookingDate.getTime())) {
+      bookingDate = new Date();
+    }
+  } catch {
+    bookingDate = new Date();
+  }
+
+  return {
+    id: booking.id,
+    serviceId: booking.service_id,
+    serviceName: booking.service_name,
+    date: appointmentDate,
+    time: booking.appointment_time,
+    price: booking.amount_paid,
+    status: booking.status as AppointmentStatus,
+    providerName: "Service Provider", // This information would be joined from a providers table in a real app
+    location: "Service Location", // This information would be joined from a locations table in a real app
+    duration: "60 min", // This information would be joined from a services table in a real app
+    bookingDate: bookingDate,
+    category: "service" // This information would be joined from a services table in a real app
+  };
 }
 
-// Sample data (in a real app, this would be fetched from an API)
-const mockAppointments: Appointment[] = [
-  {
-    id: "appt-1",
-    serviceId: "1",
-    serviceName: "Business Consultation",
-    date: createValidDate(3), // 3 days from now
-    time: "10:00 AM",
-    price: 99,
-    status: "confirmed",
-    providerName: "John Smith",
-    location: "Online Meeting",
-    duration: "60 min",
-    bookingDate: createValidDate(-2), // 2 days ago
-    category: "consulting"
-  },
-  {
-    id: "appt-2",
-    serviceId: "2",
-    serviceName: "Haircut & Styling",
-    date: createValidDate(7), // 7 days from now
-    time: "2:30 PM",
-    price: 49,
-    status: "pending",
-    providerName: "Sarah Johnson",
-    location: "123 Beauty Ave, Suite 4",
-    duration: "45 min",
-    bookingDate: createValidDate(-1), // 1 day ago
-    category: "beauty"
-  },
-  {
-    id: "appt-3",
-    serviceId: "5",
-    serviceName: "Massage Therapy",
-    date: createValidDate(-5), // 5 days ago
-    time: "3:00 PM",
-    price: 79,
-    status: "completed",
-    providerName: "Michael Chen",
-    location: "Relaxation Spa, 456 Wellness Blvd",
-    duration: "60 min",
-    bookingDate: createValidDate(-15), // 15 days ago
-    category: "beauty"
-  },
-  {
-    id: "appt-4",
-    serviceId: "3",
-    serviceName: "Home Repair",
-    date: createValidDate(14), // 14 days from now
-    time: "9:00 AM",
-    price: 129,
-    status: "confirmed",
-    providerName: "Robert Wilson",
-    location: "Your Home Address",
-    duration: "120 min",
-    bookingDate: createValidDate(-3), // 3 days ago
-    category: "maintenance"
-  }
-];
-
 /**
- * Get appointments for the current user
- * In a real app, this would likely fetch from an API with authentication
+ * Get appointments for the current user from Supabase
+ * @param userId Optional user ID to pass to Supabase
  */
-export async function getAppointments(): Promise<Appointment[]> {
-  // Simulate API call delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Ensure all dates are valid before returning
-      const validatedAppointments = mockAppointments.map(appointment => ({
-        ...appointment,
-        date: appointment.date instanceof Date && !isNaN(appointment.date.getTime()) 
-          ? appointment.date 
-          : new Date(),
-        bookingDate: appointment.bookingDate instanceof Date && !isNaN(appointment.bookingDate.getTime())
-          ? appointment.bookingDate
-          : new Date()
-      }));
-      
-      resolve(validatedAppointments);
-    }, 800);
-  });
+export async function getAppointments(userId?: string): Promise<Appointment[]> {
+  try {
+    // Fetch bookings from Supabase
+    const supabaseBookings = await getUserBookings(userId);
+    
+    // Convert to our Appointment interface
+    return supabaseBookings.map(mapSupabaseBookingToAppointment);
+  } catch (error) {
+    console.error("Error in getAppointments:", error);
+    return [];
+  }
 }
 
 /**
  * Cancel an appointment by ID
  * @param appointmentId The ID of the appointment to cancel
+ * @param userId Optional user ID to pass to Supabase
  * @returns The updated appointment or null if not found
  */
-export async function cancelAppointment(appointmentId: string): Promise<Appointment | null> {
-  // Simulate API call delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const appointmentIndex = mockAppointments.findIndex(
-        (appointment) => appointment.id === appointmentId
-      );
-
-      if (appointmentIndex === -1) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Appointment not found",
-        });
-        resolve(null);
-        return;
-      }
-
-      // Check if appointment is already cancelled
-      if (mockAppointments[appointmentIndex].status === "cancelled") {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Appointment is already cancelled",
-        });
-        resolve(null);
-        return;
-      }
-
-      // Safely check if appointment is in the past
-      const appointmentDate = mockAppointments[appointmentIndex].date;
-      const isValidDate = appointmentDate instanceof Date && !isNaN(appointmentDate.getTime());
-      
-      if (isValidDate && appointmentDate < new Date()) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Cannot cancel past appointments",
-        });
-        resolve(null);
-        return;
-      }
-
-      // Update the appointment status to cancelled
-      mockAppointments[appointmentIndex] = {
-        ...mockAppointments[appointmentIndex],
-        status: "cancelled",
-      };
-
+export async function cancelAppointment(appointmentId: string, userId?: string): Promise<Appointment | null> {
+  try {
+    // Try to cancel in Supabase
+    const success = await cancelSupabaseBooking(appointmentId);
+    
+    if (!success) {
       toast({
-        variant: "success",
-        title: "Appointment Cancelled",
-        description: "Your appointment has been successfully cancelled",
+        variant: "destructive",
+        title: "Error",
+        description: "There was a problem cancelling your appointment.",
       });
-
-      resolve(mockAppointments[appointmentIndex]);
-    }, 800);
-  });
+      return null;
+    }
+    
+    // Get the updated appointment
+    const appointments = await getAppointments(userId);
+    const updatedAppointment = appointments.find(a => a.id === appointmentId);
+    
+    if (!updatedAppointment) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Appointment not found after cancellation.",
+      });
+      return null;
+    }
+    
+    toast({
+      variant: "success",
+      title: "Appointment Cancelled",
+      description: "Your appointment has been successfully cancelled",
+    });
+    
+    return updatedAppointment;
+  } catch (error) {
+    console.error("Error in cancelAppointment:", error);
+    
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to cancel appointment. Please try again.",
+    });
+    
+    return null;
+  }
 } 

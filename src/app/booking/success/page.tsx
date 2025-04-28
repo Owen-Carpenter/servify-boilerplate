@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { SessionProvider } from "next-auth/react";
 
 interface BookingDetails {
   id: string;
@@ -16,7 +17,7 @@ interface BookingDetails {
   status?: string;
 }
 
-export default function BookingSuccessPage() {
+function BookingSuccessPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("sessionId");
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
@@ -33,7 +34,9 @@ export default function BookingSuccessPage() {
           return;
         }
 
-        const response = await fetch(`/api/bookings/details?sessionId=${sessionId}`);
+        const response = await fetch(`/api/bookings/details?sessionId=${sessionId}`, {
+          credentials: "include"
+        });
         const data = await response.json();
         
         if (data.success && data.booking) {
@@ -155,5 +158,13 @@ export default function BookingSuccessPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function BookingSuccessPage() {
+  return (
+    <SessionProvider>
+      <BookingSuccessPageContent />
+    </SessionProvider>
   );
 } 
