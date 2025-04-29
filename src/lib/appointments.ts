@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
-import { getUserBookings, cancelBooking as cancelSupabaseBooking, SupabaseBooking } from "./supabase-bookings";
+import { getUserBookings, SupabaseBooking } from "./supabase-bookings";
 
 // Appointment statuses
 export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
@@ -100,30 +100,32 @@ export async function getAppointments(userId?: string): Promise<Appointment[]> {
  */
 export async function cancelAppointment(appointmentId: string, userId?: string): Promise<Appointment | null> {
   try {
-    // Try to cancel in Supabase
-    const success = await cancelSupabaseBooking(appointmentId);
+    // Use the server API to cancel the appointment
+    const response = await fetch('/api/appointments/cancel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        appointmentId,
+        userId
+      }),
+    });
     
-    if (!success) {
+    const data = await response.json();
+    
+    if (!response.ok || !data.success) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "There was a problem cancelling your appointment.",
+        description: data.message || "There was a problem cancelling your appointment.",
       });
       return null;
     }
     
-    // Get the updated appointment
+    // Refresh the appointments list to get the updated data
     const appointments = await getAppointments(userId);
     const updatedAppointment = appointments.find(a => a.id === appointmentId);
-    
-    if (!updatedAppointment) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Appointment not found after cancellation.",
-      });
-      return null;
-    }
     
     toast({
       variant: "success",
@@ -131,7 +133,7 @@ export async function cancelAppointment(appointmentId: string, userId?: string):
       description: "Your appointment has been successfully cancelled",
     });
     
-    return updatedAppointment;
+    return updatedAppointment || null;
   } catch (error) {
     console.error("Error in cancelAppointment:", error);
     

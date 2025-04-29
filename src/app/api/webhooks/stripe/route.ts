@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendPaymentReceiptEmail } from '@/lib/email';
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -12,9 +12,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-03-31.basil',
 });
-
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 // Webhook secret for verifying the event
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -85,9 +82,9 @@ export async function POST(req: Request) {
         .eq('id', userId)
         .single();
 
-      // 4. Send confirmation email
+      // 4. Send payment receipt email
       if (userData?.email) {
-        await sendBookingConfirmationEmail({
+        await sendPaymentReceiptEmail({
           email: userData.email,
           name: userData.name || 'Valued Customer',
           bookingId,
@@ -107,65 +104,4 @@ export async function POST(req: Request) {
 
   // Return a 200 response to acknowledge receipt of the event
   return NextResponse.json({ success: true });
-}
-
-// Helper function to send booking confirmation email
-async function sendBookingConfirmationEmail({ 
-  email, 
-  name, 
-  bookingId, 
-  serviceName, 
-  date, 
-  time,
-  amount 
-}: { 
-  email: string;
-  name: string;
-  bookingId: string;
-  serviceName: string;
-  date: string;
-  time: string;
-  amount: string;
-}) {
-  try {
-    const { error } = await resend.emails.send({
-      from: 'Servify <no-reply@yourdomain.com>',
-      to: email,
-      subject: 'Your booking is confirmed!',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #4f46e5;">Booking Confirmation</h2>
-          <p>Hello ${name},</p>
-          <p>Thank you for your booking! Your appointment has been confirmed.</p>
-          
-          <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 24px 0;">
-            <h3 style="margin-top: 0; color: #111827;">Booking Details</h3>
-            <p style="margin: 8px 0;"><strong>Confirmation #:</strong> ${bookingId}</p>
-            <p style="margin: 8px 0;"><strong>Service:</strong> ${serviceName}</p>
-            <p style="margin: 8px 0;"><strong>Date:</strong> ${date}</p>
-            <p style="margin: 8px 0;"><strong>Time:</strong> ${time}</p>
-            <p style="margin: 8px 0;"><strong>Amount Paid:</strong> ${amount}</p>
-          </div>
-          
-          <p>You can view your appointment details in your <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard" style="color: #4f46e5;">dashboard</a>.</p>
-          
-          <p>If you need to reschedule or have any questions, please contact our customer support.</p>
-          
-          <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-            Thank you for choosing Servify!<br />
-            The Servify Team
-          </p>
-        </div>
-      `,
-    });
-
-    if (error) {
-      console.error('Error sending confirmation email:', error);
-    }
-    
-    return { success: !error };
-  } catch (error) {
-    console.error('Error in sendBookingConfirmationEmail:', error);
-    return { success: false };
-  }
 } 
