@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 
 interface BookingDetails {
   id: string;
   service: string;
+  service_name: string;
   date: string;
+  appointment_date: string;
   time: string;
+  appointment_time: string;
   amount: string;
+  amount_paid: number;
   status?: string;
+  user_id?: string;
 }
 
 function BookingSuccessPageContent() {
@@ -23,6 +28,8 @@ function BookingSuccessPageContent() {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     // Fetch booking details from the API
@@ -41,6 +48,11 @@ function BookingSuccessPageContent() {
         
         if (data.success && data.booking) {
           setBookingDetails(data.booking);
+          
+          // Send payment receipt email if booking exists and email not sent yet
+          if (data.booking && !emailSent) {
+            await sendPaymentReceiptEmail(data.booking);
+          }
         } else {
           setError(data.message || "Failed to retrieve booking details");
         }
@@ -57,7 +69,56 @@ function BookingSuccessPageContent() {
     } else {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, emailSent]);
+
+  // Function to send payment receipt email
+  const sendPaymentReceiptEmail = async (booking: BookingDetails) => {
+    try {
+      // Get user details from session or booking
+      const userId = booking.user_id || session?.user?.id;
+      
+      if (!userId) {
+        console.error("No user ID available to send email");
+        return;
+      }
+      
+      // Get user email from API
+      const userResponse = await fetch(`/api/users/${userId}`);
+      const userData = await userResponse.json();
+      
+      if (!userData.success || !userData.user?.email) {
+        console.error("Could not get user email for receipt");
+        return;
+      }
+      
+      // Send the email using our API
+      const response = await fetch('/api/emails/payment-receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userData.user.email,
+          name: userData.user.name || 'Valued Customer',
+          bookingId: booking.id,
+          serviceName: booking.service_name || booking.service,
+          date: new Date(booking.appointment_date || booking.date).toLocaleDateString(),
+          time: booking.appointment_time || booking.time,
+          amount: `$${(booking.amount_paid || 0).toFixed(2)}`,
+        }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setEmailSent(true);
+        console.log("Payment receipt email sent successfully");
+      } else {
+        console.error("Failed to send payment receipt email:", result.message);
+      }
+    } catch (error) {
+      console.error("Error sending payment receipt email:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -121,7 +182,7 @@ function BookingSuccessPageContent() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Service:</span>
-              <span className="font-medium">{bookingDetails?.service}</span>
+              <span className="font-medium">{bookingDetails?.service_name || bookingDetails?.service}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Date:</span>
@@ -140,8 +201,17 @@ function BookingSuccessPageContent() {
             </div>
             <div className="flex justify-between pt-3 border-t mt-3">
               <span className="text-gray-800 font-medium">Amount Paid:</span>
-              <span className="font-bold text-primary">{bookingDetails?.amount}</span>
+              <span className="font-bold text-primary">
+                ${typeof bookingDetails?.amount_paid === 'number' 
+                  ? bookingDetails.amount_paid.toFixed(2) 
+                  : bookingDetails?.amount}
+              </span>
             </div>
+            {emailSent && (
+              <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md text-sm">
+                A receipt has been sent to your email.
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="px-6 pb-6 pt-2 flex flex-col space-y-3">
@@ -155,6 +225,15 @@ function BookingSuccessPageContent() {
               Book Another Service
             </Button>
           </Link>
+          {!emailSent && (
+            <Button 
+              variant="ghost" 
+              className="w-full"
+              onClick={() => bookingDetails && sendPaymentReceiptEmail(bookingDetails)}
+            >
+              Resend Receipt Email
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>
