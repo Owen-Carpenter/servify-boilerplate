@@ -14,8 +14,9 @@ import { type User, type UserRole } from "@/lib/user";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
-import { getBookingCountsByStatus } from "@/lib/supabase-bookings";
+import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
 import { useSession } from "next-auth/react";
+import { setSupabaseSession } from "@/lib/auth";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -30,6 +31,10 @@ export default function DashboardPage() {
     completed: 0,
     cancelled: 0
   });
+  // Keeping this state for future extensions where we might need to directly 
+  // access the raw Supabase booking data (e.g., for detailed booking information)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [supabaseBookings, setSupabaseBookings] = useState<SupabaseBooking[]>([]);
 
   // Group appointments by status
   const upcomingAppointments = appointments.filter(app => app.status === 'confirmed' || app.status === 'pending');
@@ -63,6 +68,10 @@ export default function DashboardPage() {
           return;
         }
         
+        // Set Supabase session with NextAuth user ID to enable RLS policies
+        console.log("Setting Supabase session with NextAuth user ID:", userId);
+        await setSupabaseSession(userId);
+        
         // Build a profile object from session.user
         let phone: string = "";
         if (typeof session.user === "object" && session.user !== null && "phone" in session.user) {
@@ -94,6 +103,18 @@ export default function DashboardPage() {
           setAppointments(appData);
         } else {
           console.error("Invalid appointment data received:", appData);
+        }
+        
+        // Get Supabase bookings using the user ID from session
+        console.log("Fetching Supabase bookings for user:", userId);
+        const bookingsData = await getUserBookings(userId);
+        if (bookingsData && Array.isArray(bookingsData)) {
+          console.log("Fetched Supabase bookings:", bookingsData);
+          setSupabaseBookings(bookingsData);
+          
+          // Note: we're not merging with appointments separately here
+          // because getAppointments() already does the conversion
+          // from SupabaseBooking to Appointment - see appointments.ts
         }
         
         // Get booking counts directly from Supabase - explicitly pass the user ID

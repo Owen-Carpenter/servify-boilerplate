@@ -66,11 +66,26 @@ function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment 
  */
 export async function getAppointments(userId?: string): Promise<Appointment[]> {
   try {
+    console.log("getAppointments: Fetching with userId:", userId);
+    
     // Fetch bookings from Supabase
     const supabaseBookings = await getUserBookings(userId);
+    console.log("getAppointments: Raw Supabase bookings:", supabaseBookings);
+    
+    if (!supabaseBookings || supabaseBookings.length === 0) {
+      console.log("getAppointments: No bookings found");
+      return [];
+    }
     
     // Convert to our Appointment interface
-    return supabaseBookings.map(mapSupabaseBookingToAppointment);
+    const appointments = supabaseBookings.map(booking => {
+      const appointment = mapSupabaseBookingToAppointment(booking);
+      console.log("getAppointments: Mapped appointment:", appointment);
+      return appointment;
+    });
+    
+    console.log("getAppointments: Final appointments list:", appointments);
+    return appointments;
   } catch (error) {
     console.error("Error in getAppointments:", error);
     return [];

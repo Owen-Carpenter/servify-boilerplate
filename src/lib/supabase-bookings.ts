@@ -35,19 +35,49 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
       return [];
     }
     
-    // Get bookings for the current user
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('user_id', authenticatedUserId)
-      .order('created_at', { ascending: false });
+    console.log("Fetching bookings for user ID:", authenticatedUserId);
     
-    if (error) {
-      console.error("Error fetching bookings:", error);
-      return [];
+    // Use direct SQL query to bypass RLS when userId is provided explicitly
+    // This approach doesn't rely on the auth.uid() matching the user_id
+    if (userId) {
+      // When we have a userId from NextAuth, use a direct SQL query
+      const { data, error } = await supabase
+        .rpc('get_user_bookings', { user_id_param: authenticatedUserId });
+      
+      if (error) {
+        console.error("Error fetching bookings with RPC:", error);
+        
+        // Fallback to direct query approach
+        const { data: directData, error: directError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('user_id', authenticatedUserId)
+          .order('created_at', { ascending: false });
+        
+        if (directError) {
+          console.error("Error fetching bookings with direct query:", directError);
+          return [];
+        }
+        
+        return directData as SupabaseBooking[];
+      }
+      
+      return data as SupabaseBooking[];
+    } else {
+      // Use normal RLS approach when relying on Supabase auth
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('user_id', authenticatedUserId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching bookings:", error);
+        return [];
+      }
+      
+      return data as SupabaseBooking[];
     }
-    
-    return data as SupabaseBooking[];
   } catch (error) {
     console.error("Error in getUserBookings:", error);
     return [];
@@ -123,15 +153,44 @@ export async function getBookingCountsByStatus(userId?: string): Promise<{ pendi
       return { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
     }
     
-    // Get all bookings for the user
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('status')
-      .eq('user_id', authenticatedUserId);
+    // Use direct SQL query to bypass RLS when userId is provided explicitly
+    // This matches the approach in getUserBookings
+    let bookings: Array<{ status: string }> = [];
     
-    if (error) {
-      console.error("Error fetching booking counts:", error);
-      return { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+    if (userId) {
+      // Try RPC first
+      const { data, error } = await supabase
+        .rpc('get_user_bookings', { user_id_param: authenticatedUserId });
+      
+      if (error) {
+        // Fallback to direct query
+        const { data: directData, error: directError } = await supabase
+          .from('bookings')
+          .select('status')
+          .eq('user_id', authenticatedUserId);
+        
+        if (directError) {
+          console.error("Error fetching booking counts:", directError);
+          return { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+        }
+        
+        bookings = directData;
+      } else {
+        bookings = data as Array<{ status: string }>;
+      }
+    } else {
+      // Use normal RLS approach
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('status')
+        .eq('user_id', authenticatedUserId);
+      
+      if (error) {
+        console.error("Error fetching booking counts:", error);
+        return { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+      }
+      
+      bookings = data;
     }
     
     // Count occurrences of each status
@@ -142,7 +201,7 @@ export async function getBookingCountsByStatus(userId?: string): Promise<{ pendi
       cancelled: 0
     };
     
-    data.forEach(booking => {
+    bookings.forEach(booking => {
       if (booking.status in counts) {
         counts[booking.status as keyof typeof counts]++;
       }
