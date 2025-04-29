@@ -7,6 +7,7 @@ import { CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SessionProvider, useSession } from "next-auth/react";
+import { Footer } from "@/components/ui/footer";
 
 interface BookingDetails {
   id: string;
@@ -122,11 +123,15 @@ function BookingSuccessPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full bg-gray-200 mb-4"></div>
-          <div className="h-4 w-48 bg-gray-200 rounded mb-2"></div>
-          <div className="h-3 w-32 bg-gray-200 rounded"></div>
+      <div className="min-h-screen flex items-center justify-center gradient-bg pt-24">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-1/4 w-60 h-60 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute bottom-40 right-1/4 w-40 h-40 bg-white rounded-full animate-pulse"></div>
+        </div>
+        <div className="animate-pulse flex flex-col items-center relative z-10">
+          <div className="h-12 w-12 rounded-full bg-white mb-4"></div>
+          <div className="h-4 w-48 bg-white/80 rounded mb-2"></div>
+          <div className="h-3 w-32 bg-white/60 rounded"></div>
         </div>
       </div>
     );
@@ -134,23 +139,29 @@ function BookingSuccessPageContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <Card className="w-full max-w-md mx-auto shadow-xl border-0">
-          <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white text-center pt-8 pb-10 rounded-t-lg">
+      <div className="min-h-screen gradient-bg pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-20 -left-20 w-60 h-60 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-40 h-40 bg-white rounded-full animate-pulse delay-300"></div>
+          <div className="absolute bottom-10 left-1/4 w-20 h-20 bg-white rounded-full animate-pulse delay-200"></div>
+          <div className="absolute -bottom-10 right-1/3 w-30 h-30 bg-white rounded-full animate-pulse delay-400"></div>
+        </div>
+        <Card className="w-full max-w-md mx-auto shadow-xl border-0 overflow-hidden z-10 relative">
+          <CardHeader className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-center pt-8 pb-10">
             <CardTitle className="text-2xl font-bold">Booking Status</CardTitle>
-            <CardDescription className="text-white/80 mt-1">
+            <CardDescription className="text-white/90 mt-1">
               There was an issue retrieving your booking details
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6 px-6">
+          <CardContent className="pt-6 px-6 bg-white">
             <p className="text-gray-600 text-center">{error}</p>
-            <p className="text-gray-600 text-center mt-2">
+            <p className="text-gray-600 text-center mt-4">
               If you have completed a payment, your booking is still valid. Please check your email for confirmation details or contact customer support.
             </p>
           </CardContent>
-          <CardFooter className="px-6 pb-6 pt-2 flex flex-col space-y-3">
+          <CardFooter className="px-6 pb-6 pt-2 flex flex-col space-y-3 bg-white">
             <Link href="/dashboard" className="w-full">
-              <Button variant="default" className="w-full">
+              <Button variant="default" className="w-full bg-rose-600 hover:bg-rose-700">
                 Go to Dashboard
               </Button>
             </Link>
@@ -161,18 +172,24 @@ function BookingSuccessPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <Card className="w-full max-w-md mx-auto shadow-xl border-0">
-        <CardHeader className="bg-gradient-to-r from-primary to-emerald-600 text-white text-center pt-8 pb-10 rounded-t-lg">
+    <div className="min-h-screen gradient-bg pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative">
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute -top-20 -left-20 w-60 h-60 bg-white rounded-full animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-40 h-40 bg-white rounded-full animate-pulse delay-300"></div>
+        <div className="absolute bottom-10 left-1/4 w-20 h-20 bg-white rounded-full animate-pulse delay-200"></div>
+        <div className="absolute -bottom-10 right-1/3 w-30 h-30 bg-white rounded-full animate-pulse delay-400"></div>
+      </div>
+      <Card className="w-full max-w-md mx-auto shadow-xl border-0 overflow-hidden z-10 relative">
+        <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-center pt-8 pb-10">
           <div className="mx-auto bg-white rounded-full p-2 w-16 h-16 flex items-center justify-center mb-3">
-            <CheckCircle className="h-10 w-10 text-primary" />
+            <CheckCircle className="h-10 w-10 text-emerald-500" />
           </div>
           <CardTitle className="text-2xl font-bold">Booking Confirmed!</CardTitle>
-          <CardDescription className="text-white/80 mt-1">
+          <CardDescription className="text-white/90 mt-1">
             Thank you for your booking
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 px-6">
+        <CardContent className="pt-6 px-6 bg-white">
           <div className="border-b pb-4 mb-4">
             <h3 className="text-lg font-medium text-gray-900 mb-1">Booking Details</h3>
             <p className="text-sm text-gray-600">
@@ -182,15 +199,23 @@ function BookingSuccessPageContent() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Service:</span>
-              <span className="font-medium">{bookingDetails?.service_name || bookingDetails?.service}</span>
+              <span className="font-medium">
+                {bookingDetails?.service_name || bookingDetails?.service}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Date:</span>
-              <span className="font-medium">{bookingDetails?.date}</span>
+              <span className="font-medium">
+                {bookingDetails?.appointment_date ? 
+                  new Date(bookingDetails.appointment_date).toLocaleDateString() : 
+                  bookingDetails?.date}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Time:</span>
-              <span className="font-medium">{bookingDetails?.time}</span>
+              <span className="font-medium">
+                {bookingDetails?.appointment_time || bookingDetails?.time}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Status:</span>
@@ -201,34 +226,34 @@ function BookingSuccessPageContent() {
             </div>
             <div className="flex justify-between pt-3 border-t mt-3">
               <span className="text-gray-800 font-medium">Amount Paid:</span>
-              <span className="font-bold text-primary">
+              <span className="font-bold text-emerald-600">
                 ${typeof bookingDetails?.amount_paid === 'number' 
                   ? bookingDetails.amount_paid.toFixed(2) 
                   : bookingDetails?.amount}
               </span>
             </div>
             {emailSent && (
-              <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-md text-sm">
+              <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 rounded-md text-sm">
                 A receipt has been sent to your email.
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className="px-6 pb-6 pt-2 flex flex-col space-y-3">
+        <CardFooter className="px-6 pb-6 pt-2 flex flex-col space-y-3 bg-white">
           <Link href="/dashboard" className="w-full">
-            <Button variant="default" className="w-full">
+            <Button variant="default" className="w-full bg-emerald-600 hover:bg-emerald-700">
               View My Appointments
             </Button>
           </Link>
           <Link href="/services" className="w-full">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50">
               Book Another Service
             </Button>
           </Link>
           {!emailSent && (
             <Button 
               variant="ghost" 
-              className="w-full"
+              className="w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
               onClick={() => bookingDetails && sendPaymentReceiptEmail(bookingDetails)}
             >
               Resend Receipt Email
@@ -243,7 +268,12 @@ function BookingSuccessPageContent() {
 export default function BookingSuccessPage() {
   return (
     <SessionProvider>
-      <BookingSuccessPageContent />
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-grow">
+          <BookingSuccessPageContent />
+        </div>
+        <Footer />
+      </div>
     </SessionProvider>
   );
 } 

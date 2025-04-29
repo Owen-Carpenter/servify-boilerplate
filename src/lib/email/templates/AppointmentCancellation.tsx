@@ -40,15 +40,15 @@ export const AppointmentCancellation: React.FC<AppointmentCancellationProps> = (
       <Head />
       <Preview>{previewText}</Preview>
       <Tailwind>
-        <Body className="bg-gray-50 font-sans">
+        <Body className="bg-rose-50 font-sans">
           <Container className="mx-auto p-6 max-w-md">
             <Section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <Heading className="text-xl font-bold text-gray-900 mb-2">Appointment Cancellation</Heading>
               <Text className="text-gray-700">Hello {name},</Text>
               <Text className="text-gray-700">Your appointment has been successfully cancelled as requested.</Text>
               
-              <Section className="bg-gray-50 p-4 rounded-md my-4 border border-gray-200">
-                <Heading className="text-md font-bold text-gray-900">Appointment Details</Heading>
+              <Section className="bg-rose-50 p-4 rounded-md my-4 border border-rose-100">
+                <Heading className="text-md font-bold text-gray-900">Cancelled Appointment Details</Heading>
                 <Row className="mt-2">
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm font-medium">Booking #:</Text></Column>
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm">{bookingId}</Text></Column>
@@ -67,13 +67,13 @@ export const AppointmentCancellation: React.FC<AppointmentCancellationProps> = (
                 </Row>
                 <Row>
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm font-medium">Status:</Text></Column>
-                  <Column className="w-1/2"><Text className="text-red-600 text-sm font-medium">Cancelled</Text></Column>
+                  <Column className="w-1/2"><Text className="text-rose-600 text-sm font-medium">Cancelled</Text></Column>
                 </Row>
               </Section>
               
               <Section className="text-center my-6">
                 <Button 
-                  className="bg-indigo-600 text-white px-5 py-3 rounded-md font-medium"
+                  className="bg-rose-600 text-white px-5 py-3 rounded-md font-medium"
                   href={`${baseUrl}/services`}
                 >
                   Book Another Appointment

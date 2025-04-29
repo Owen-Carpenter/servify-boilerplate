@@ -42,14 +42,14 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
       <Head />
       <Preview>{previewText}</Preview>
       <Tailwind>
-        <Body className="bg-gray-50 font-sans">
+        <Body className="bg-emerald-50 font-sans">
           <Container className="mx-auto p-6 max-w-md">
             <Section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
               <Heading className="text-xl font-bold text-gray-900 mb-2">Payment Receipt</Heading>
               <Text className="text-gray-700">Hello {name},</Text>
               <Text className="text-gray-700">Thank you for your payment. Your booking has been confirmed.</Text>
               
-              <Section className="bg-gray-50 p-4 rounded-md my-4 border border-gray-200">
+              <Section className="bg-emerald-50 p-4 rounded-md my-4 border border-emerald-100">
                 <Heading className="text-md font-bold text-gray-900">Receipt Details</Heading>
                 <Row className="mt-2">
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm font-medium">Receipt #:</Text></Column>
@@ -67,16 +67,16 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm font-medium">Time:</Text></Column>
                   <Column className="w-1/2"><Text className="text-gray-700 text-sm">{time}</Text></Column>
                 </Row>
-                <Hr className="my-2 border-gray-200" />
+                <Hr className="my-2 border-emerald-200" />
                 <Row>
                   <Column className="w-1/2"><Text className="text-gray-800 text-sm font-bold">Total Paid:</Text></Column>
-                  <Column className="w-1/2"><Text className="text-gray-800 text-sm font-bold">{amount}</Text></Column>
+                  <Column className="w-1/2"><Text className="text-emerald-700 text-sm font-bold">{amount}</Text></Column>
                 </Row>
               </Section>
               
               <Section className="text-center my-6">
                 <Button 
-                  className="bg-indigo-600 text-white px-5 py-3 rounded-md font-medium"
+                  className="bg-emerald-600 text-white px-5 py-3 rounded-md font-medium"
                   href={`${baseUrl}/dashboard`}
                 >
                   View Appointment

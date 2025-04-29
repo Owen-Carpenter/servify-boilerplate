@@ -196,11 +196,12 @@ export function Navigation() {
         {/* Mobile Navigation */}
         <div 
           className={cn(
-            "fixed inset-0 bg-[#6E3FC9] text-white flex flex-col justify-center items-center transition-opacity duration-300 md:hidden",
+            "fixed inset-0 top-0 left-0 right-0 bottom-0 bg-[#6E3FC9] text-white flex flex-col justify-center items-center transition-opacity duration-300 md:hidden overflow-y-auto z-40",
             mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
+          style={{ height: "100vh" }}
         >
-          <div className="flex flex-col gap-6 text-center">
+          <div className="flex flex-col gap-6 text-center py-20">
             {authenticatedItems.map((item) => (
               <Link
                 key={item.href}
