@@ -17,38 +17,6 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
-/**
- * Set Supabase session using NextAuth user ID
- * This allows RLS policies to work with NextAuth sessions
- * @param userId User ID from NextAuth session
- * @returns Success status
- */
-export async function setSupabaseSession(userId: string): Promise<boolean> {
-  try {
-    if (!userId) {
-      console.error("No user ID provided to set Supabase session");
-      return false;
-    }
-
-    // Create a custom JWT for Supabase
-    const { data, error } = await supabase.auth.setSession({
-      access_token: userId, // Use the user ID as the access token
-      refresh_token: userId, // Also use user ID as refresh token for simplicity
-    });
-    
-    if (error) {
-      console.error("Error setting Supabase session:", error);
-      return false;
-    }
-    
-    console.log("Successfully set Supabase session for user:", userId);
-    return !!data.session;
-  } catch (error) {
-    console.error("Error in setSupabaseSession:", error);
-    return false;
-  }
-}
-
 // Function to fetch user profile data from Supabase
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase

@@ -16,7 +16,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
 import { useSession } from "next-auth/react";
-import { setSupabaseSession } from "@/lib/auth";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -67,10 +66,6 @@ export default function DashboardPage() {
           });
           return;
         }
-        
-        // Set Supabase session with NextAuth user ID to enable RLS policies
-        console.log("Setting Supabase session with NextAuth user ID:", userId);
-        await setSupabaseSession(userId);
         
         // Build a profile object from session.user
         let phone: string = "";
