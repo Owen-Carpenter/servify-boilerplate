@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
 import { useSession } from "next-auth/react";
+import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -166,6 +167,11 @@ export default function DashboardPage() {
     }
   };
 
+  // Modified function to handle selecting an event from the calendar
+  const handleSelectAppointment = (appointment: Appointment) => {
+    router.push(`/appointments/${appointment.id}`);
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
@@ -219,41 +225,11 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Updates/Notifications */}
-        {updates.length > 0 && (
-          <Card className="backdrop-blur-sm bg-white/90 shadow-xl border-0 overflow-hidden">
-            <CardHeader className="bg-primary/5 border-b">
-              <CardTitle className="text-xl flex items-center">
-                <BadgeCheck className="mr-2 h-5 w-5 text-primary" />
-                Updates & Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {updates.map((update) => (
-                  <div key={update.id} className="p-4 flex justify-between items-center">
-                    <div className="flex-1">
-                      <div className="font-medium">{update.title}</div>
-                      <div className="text-sm text-muted-foreground">{update.message}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(update.date), 'MMM d, yyyy')}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleReadUpdate(update.id)}
-                      className="ml-2"
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Dismiss</span>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Appointment Calendar - replacing Updates/Notifications */}
+        <AppointmentCalendar 
+          appointments={appointments} 
+          onSelectEvent={handleSelectAppointment}
+        />
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="w-full z-10 relative">
