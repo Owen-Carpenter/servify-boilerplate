@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,9 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { Service } from "@/lib/services";
 import { Clock, ArrowLeft, MapPin, Check, DollarSign, CalendarIcon } from "lucide-react";
+import { format, addMonths } from "date-fns";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface ServiceDetailClientProps {
   service: Service | null;
@@ -123,7 +125,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     if (category === "all") return "All Services";
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
-  
+
   return (
     <main className="gradient-bg pt-24 pb-20 min-h-screen">
       {/* Background elements */}
@@ -245,23 +247,67 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                 <CardContent className="space-y-6 pt-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">Select Date</label>
-                    <div className="border rounded-md overflow-hidden flex justify-center">
-                      <Calendar
-                        mode="single"
+                    <div className="border rounded-md overflow-hidden">
+                      <DatePicker
                         selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        disabled={(date) => {
-                          // Disable dates in the past and more than 14 days in the future
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const twoWeeksLater = new Date(today);
-                          twoWeeksLater.setDate(today.getDate() + 14);
-                          
-                          return date < today || date > twoWeeksLater;
+                        onChange={(date: Date | null) => {
+                          if (date) {
+                            setSelectedDate(date);
+                            setSelectedTime("");
+                          }
                         }}
-                        className="rounded-md p-0 mx-auto"
+                        minDate={new Date()}
+                        maxDate={addMonths(new Date(), 1)}
+                        inline
+                        calendarClassName="!border-0 !shadow-none"
+                        dayClassName={(date: Date) => {
+                          if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+                            return "!bg-primary !text-white rounded-full";
+                          }
+                          if (date.toDateString() === new Date().toDateString()) {
+                            return "!bg-primary/10 !text-primary rounded-full";
+                          }
+                          return "";
+                        }}
+                        renderCustomHeader={({
+                          date,
+                          decreaseMonth,
+                          increaseMonth,
+                          prevMonthButtonDisabled,
+                          nextMonthButtonDisabled
+                        }) => (
+                          <div className="flex items-center justify-between px-2 py-2">
+                            <button
+                              onClick={decreaseMonth}
+                              disabled={prevMonthButtonDisabled}
+                              type="button"
+                              className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                            </button>
+                            <span className="text-sm font-medium">
+                              {format(date, "MMMM yyyy")}
+                            </span>
+                            <button
+                              onClick={increaseMonth}
+                              disabled={nextMonthButtonDisabled}
+                              type="button"
+                              className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                            >
+                              <ArrowLeft className="h-4 w-4 rotate-180" />
+                            </button>
+                          </div>
+                        )}
                       />
                     </div>
+                    {selectedDate && (
+                      <div className="text-sm text-gray-500 mt-2 flex items-center justify-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        <span>
+                          {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -342,6 +388,47 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
           </div>
         </div>
       </div>
+
+      {/* Add these styles at the end of the file */}
+      <style jsx global>{`
+        .react-datepicker {
+          font-family: inherit !important;
+          border: none !important;
+          width: 100% !important;
+        }
+        .react-datepicker__month-container {
+          width: 100% !important;
+        }
+        .react-datepicker__day {
+          margin: 0.2rem !important;
+          width: 2.5rem !important;
+          line-height: 2.5rem !important;
+          border-radius: 9999px !important;
+        }
+        .react-datepicker__day:hover {
+          background-color: #f3f4f6 !important;
+        }
+        .react-datepicker__day--disabled {
+          color: #d1d5db !important;
+        }
+        .react-datepicker__day--disabled:hover {
+          background-color: transparent !important;
+        }
+        .react-datepicker__header {
+          background: white !important;
+          border: none !important;
+          padding-top: 0.5rem !important;
+        }
+        .react-datepicker__day-names {
+          margin-top: 0.5rem !important;
+        }
+        .react-datepicker__day-name {
+          margin: 0.2rem !important;
+          width: 2.5rem !important;
+          line-height: 2.5rem !important;
+          color: #6b7280 !important;
+        }
+      `}</style>
     </main>
   );
 } 
