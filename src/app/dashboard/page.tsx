@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getAppointments, cancelAppointment, type Appointment } from "@/lib/appointments";
 import { Loader2, Calendar, Clock, Home, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil } from "lucide-react";
-import { getUnreadUpdates, markUpdateAsRead, type Update } from "@/lib/updates";
+import { getUnreadUpdates } from "@/lib/updates";
 import { format } from "date-fns";
 import { type User, type UserRole } from "@/lib/user";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -17,13 +17,13 @@ import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
 import { useSession } from "next-auth/react";
 import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
+import { PendingAppointments } from "@/components/dashboard/PendingAppointments";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [profile, setProfile] = useState<User | null>(null);
-  const [updates, setUpdates] = useState<Update[]>([]);
   const router = useRouter();
   const [bookingCounts, setBookingCounts] = useState({
     pending: 0,
@@ -66,6 +66,20 @@ export default function DashboardPage() {
             description: "Unable to load user data. Please try logging in again.",
           });
           return;
+        }
+        
+        // First, try to update any pending bookings that have been paid in Stripe
+        try {
+          await fetch('/api/bookings/updatePendingStatus', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId }),
+          });
+        } catch (error) {
+          console.error("Error updating pending bookings:", error);
+          // Continue loading the dashboard even if this fails
         }
         
         // Build a profile object from session.user
@@ -122,7 +136,7 @@ export default function DashboardPage() {
         // Get updates/notifications
         const updateData = await getUnreadUpdates();
         if (updateData && Array.isArray(updateData)) {
-          setUpdates(updateData);
+          // updateData is not used in the current implementation
         }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -158,18 +172,18 @@ export default function DashboardPage() {
     }
   };
 
-  const handleReadUpdate = async (updateId: string) => {
-    try {
-      await markUpdateAsRead(updateId);
-      setUpdates(updates.filter(update => update.id !== updateId));
-    } catch (error) {
-      console.error("Error marking update as read:", error);
-    }
-  };
-
   // Modified function to handle selecting an event from the calendar
   const handleSelectAppointment = (appointment: Appointment) => {
     router.push(`/appointments/${appointment.id}`);
+  };
+
+  const handleAppointmentDeleted = (appointmentId: string) => {
+    // Remove the appointment from both the appointments state and the counts
+    setAppointments(appointments.filter(app => app.id !== appointmentId));
+    setBookingCounts(prev => ({
+      ...prev,
+      pending: Math.max(0, prev.pending - 1)
+    }));
   };
 
   if (status === "loading" || isLoading) {
@@ -246,6 +260,14 @@ export default function DashboardPage() {
           <div className="mt-8">
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Display pending appointments that need payment at the top */}
+                <div className="md:col-span-3">
+                  <PendingAppointments 
+                    appointments={appointments} 
+                    onAppointmentDeleted={handleAppointmentDeleted} 
+                  />
+                </div>
+
                 {/* User Profile Summary Card */}
                 <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                   <CardHeader className="bg-primary/5 border-b flex flex-row items-center gap-4">
@@ -419,6 +441,13 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="appointments" className="space-y-6">
+              {/* Pending Appointments Section */}
+              <PendingAppointments 
+                appointments={appointments} 
+                onAppointmentDeleted={handleAppointmentDeleted} 
+              />
+              
+              {/* Upcoming Appointments Section */}
               <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                 <CardHeader className="bg-primary/5 border-b">
                   <CardTitle>Upcoming Appointments</CardTitle>

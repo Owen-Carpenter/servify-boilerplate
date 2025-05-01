@@ -44,6 +44,18 @@ function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment 
     bookingDate = new Date();
   }
 
+  // Check if payment is complete in Stripe even if booking status is still pending
+  const stripePaymentComplete = 
+    booking.stripe_session?.payment_status === 'paid' || 
+    booking.stripe_session?.status === 'complete' ||
+    booking.payment_status === 'paid'; // Also check booking.payment_status
+  
+  // If Stripe shows payment is complete, treat the booking as confirmed
+  const effectiveStatus: AppointmentStatus = 
+    booking.status === 'pending' && stripePaymentComplete
+      ? 'confirmed'
+      : booking.status as AppointmentStatus;
+
   return {
     id: booking.id,
     serviceId: booking.service_id,
@@ -51,7 +63,7 @@ function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment 
     date: appointmentDate,
     time: booking.appointment_time,
     price: booking.amount_paid,
-    status: booking.status as AppointmentStatus,
+    status: effectiveStatus,
     providerName: "Service Provider", // This information would be joined from a providers table in a real app
     location: "Service Location", // This information would be joined from a locations table in a real app
     duration: "60 min", // This information would be joined from a services table in a real app

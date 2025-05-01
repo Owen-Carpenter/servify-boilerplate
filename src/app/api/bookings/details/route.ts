@@ -105,12 +105,14 @@ export async function GET(req: Request) {
     // Return the booking details
     return NextResponse.json({
       success: true,
-      booking,
-      stripeSession: {
-        id: stripeSession.id,
-        status: stripeSession.status,
-        payment_status: stripeSession.payment_status,
-      },
+      booking: {
+        ...booking,
+        stripe_session: {
+          id: stripeSession.id,
+          status: stripeSession.status,
+          payment_status: stripeSession.payment_status,
+        }
+      }
     });
   } catch (error) {
     console.error("Error in booking details:", error);

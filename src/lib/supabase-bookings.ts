@@ -13,6 +13,11 @@ export interface SupabaseBooking {
   amount_paid: number;
   created_at: string;
   updated_at: string;
+  stripe_session?: {
+    id?: string;
+    status?: string;
+    payment_status?: string;
+  };
 }
 
 /**
@@ -39,6 +44,8 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
     
     // Use direct SQL query to bypass RLS when userId is provided explicitly
     // This approach doesn't rely on the auth.uid() matching the user_id
+    let bookings: SupabaseBooking[] = [];
+    
     if (userId) {
       // When we have a userId from NextAuth, use a direct SQL query
       const { data, error } = await supabase
@@ -59,10 +66,10 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
           return [];
         }
         
-        return directData as SupabaseBooking[];
+        bookings = directData as SupabaseBooking[];
+      } else {
+        bookings = data as SupabaseBooking[];
       }
-      
-      return data as SupabaseBooking[];
     } else {
       // Use normal RLS approach when relying on Supabase auth
       const { data, error } = await supabase
@@ -76,8 +83,30 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
         return [];
       }
       
-      return data as SupabaseBooking[];
+      bookings = data as SupabaseBooking[];
     }
+
+    // For server-side enhancement, we'll use the API endpoint instead of direct Stripe access
+    if (typeof window === 'undefined' && bookings.some(b => b.status === 'pending')) {
+      try {
+        // Make an API call to update any pending bookings
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/bookings/updatePendingStatus`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: authenticatedUserId }),
+        });
+        
+        // Re-fetch the bookings after the update
+        return getUserBookings(userId);
+      } catch (error) {
+        console.error("Error updating pending bookings:", error);
+        // Continue with current bookings if update fails
+      }
+    }
+    
+    return bookings;
   } catch (error) {
     console.error("Error in getUserBookings:", error);
     return [];

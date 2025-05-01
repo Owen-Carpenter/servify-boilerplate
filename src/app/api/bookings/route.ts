@@ -110,8 +110,9 @@ export async function POST(req: Request) {
       console.log("User created successfully");
     }
     
-    // Save the booking to Supabase with pending status
-    console.log("Attempting to save booking...");
+    // Save a temporary booking record to Supabase with pending status
+    // The actual booking will be confirmed via the Stripe webhook once payment is completed
+    console.log("Creating temporary pending booking...");
     const { error } = await supabase
       .from('bookings')
       .insert({
@@ -121,10 +122,11 @@ export async function POST(req: Request) {
         service_name: bookingData.serviceName,
         appointment_date: bookingData.date,
         appointment_time: bookingData.time,
-        status: 'pending',
-        payment_status: 'pending',
+        status: 'pending', // Always pending until webhook confirms payment
+        payment_status: 'pending', // Always pending until webhook confirms payment
         payment_intent: stripeSession.id,
-        amount_paid: bookingData.price || 0
+        amount_paid: 0, // Amount will be updated after successful payment
+        created_at: new Date().toISOString(),
       });
       
     if (error) {
@@ -142,14 +144,14 @@ export async function POST(req: Request) {
       }, { status: 500 });
     }
     
-    console.log("Booking saved successfully");
+    console.log("Temporary pending booking saved successfully with ID:", bookingId);
     
     // Return the Stripe session URL for redirection
     return NextResponse.json({ 
       success: true, 
       bookingId,
       userId,
-      message: "Booking created successfully",
+      message: "Booking initiated. Redirecting to payment...",
       redirectUrl: stripeSession.url
     });
     

@@ -43,6 +43,13 @@ export async function POST(req: Request) {
     }
 
     try {
+      // First check if the booking already exists in a pending state
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single();
+
       // 1. Retrieve service details
       const { data: serviceData } = await supabase
         .from('services')
@@ -54,25 +61,50 @@ export async function POST(req: Request) {
         throw new Error(`Service not found with ID: ${serviceId}`);
       }
 
-      // 2. Save the completed booking in the database
-      const { error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          id: bookingId,
-          user_id: userId,
-          service_id: serviceId,
-          service_name: serviceData.title,
-          appointment_date: date,
-          appointment_time: time,
-          status: 'confirmed',
-          payment_status: 'paid',
-          payment_intent: session.payment_intent as string,
-          amount_paid: session.amount_total ? session.amount_total / 100 : serviceData.price, // Convert cents to dollars
-          created_at: new Date().toISOString(),
-        });
+      // Calculate the amount paid from Stripe (convert from cents to dollars)
+      const amountPaid = session.amount_total ? session.amount_total / 100 : serviceData.price;
 
-      if (bookingError) {
-        throw new Error(`Error saving booking: ${bookingError.message}`);
+      if (existingBooking) {
+        // If the booking exists, update it to confirmed status
+        console.log('Updating existing pending booking to confirmed status:', bookingId);
+        
+        const { error: updateError } = await supabase
+          .from('bookings')
+          .update({
+            status: 'confirmed',
+            payment_status: 'paid',
+            payment_intent: session.payment_intent as string,
+            amount_paid: amountPaid,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookingId);
+
+        if (updateError) {
+          throw new Error(`Error updating booking: ${updateError.message}`);
+        }
+      } else {
+        // If the booking doesn't exist yet (unlikely but possible), create it
+        console.log('Creating new confirmed booking:', bookingId);
+        
+        const { error: insertError } = await supabase
+          .from('bookings')
+          .insert({
+            id: bookingId,
+            user_id: userId,
+            service_id: serviceId,
+            service_name: serviceData.title,
+            appointment_date: date,
+            appointment_time: time,
+            status: 'confirmed',
+            payment_status: 'paid',
+            payment_intent: session.payment_intent as string,
+            amount_paid: amountPaid,
+            created_at: new Date().toISOString(),
+          });
+
+        if (insertError) {
+          throw new Error(`Error creating booking: ${insertError.message}`);
+        }
       }
 
       // 3. Get user information for the email
@@ -91,7 +123,7 @@ export async function POST(req: Request) {
           serviceName: serviceData.title,
           date: new Date(date).toLocaleDateString(),
           time,
-          amount: `$${(session.amount_total ? session.amount_total / 100 : serviceData.price).toFixed(2)}`,
+          amount: `$${amountPaid.toFixed(2)}`,
         });
       }
 
