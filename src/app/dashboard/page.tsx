@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [profile, setProfile] = useState<User | null>(null);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("overview");
   const [bookingCounts, setBookingCounts] = useState({
     pending: 0,
     confirmed: 0,
@@ -240,7 +241,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="w-full z-10 relative">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full z-10 relative">
           <TabsList className="grid w-full max-w-md grid-cols-4 mx-auto bg-white/20 backdrop-blur-sm">
             <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
               Overview
@@ -365,7 +366,7 @@ export default function DashboardPage() {
                           variant="outline"
                           size="sm"
                           className="flex-1 bg-white"
-                          onClick={() => router.push('/services')}
+                          onClick={() => setActiveTab("appointments")}
                         >
                           View All
                         </Button>

@@ -7,15 +7,31 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { redirect } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { Footer } from "@/components/ui/footer";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+
+interface ExtendedUser {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+  phone?: string;
+  address?: string;
+  bio?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(session?.user?.name || "");
-  const [phone, setPhone] = useState(""); // Add phone number fetching if available
-  const router = useRouter();
+  const user = session?.user as ExtendedUser;
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [address, setAddress] = useState(user?.address || "");
+  const [bio, setBio] = useState(user?.bio || "");
 
   // Redirect if not authenticated
   if (status === "unauthenticated") {
@@ -31,9 +47,25 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    // Here you'd make an API call to update the user's profile
-    console.log("Saving profile changes:", { name, phone });
-    setIsEditing(false);
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, phone, address, bio }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+      
+      toast.success("Profile updated successfully");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    }
   };
 
   return (
@@ -48,7 +80,7 @@ export default function ProfilePage() {
           <div className="absolute -bottom-10 right-1/3 w-30 h-30 bg-white rounded-full animate-pulse delay-400"></div>
         </div>
         
-        <div className="content-container relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h1 className="text-3xl font-bold mb-8 text-white">Profile Settings</h1>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -92,8 +124,37 @@ export default function ProfilePage() {
                     <p className="text-sm">{phone || "Not set"}</p>
                   )}
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  {isEditing ? (
+                    <Input
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Your address"
+                    />
+                  ) : (
+                    <p className="text-sm">{address || "Not set"}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  {isEditing ? (
+                    <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Tell us a little about yourself"
+                      rows={4}
+                    />
+                  ) : (
+                    <p className="text-sm">{bio || "Not set"}</p>
+                  )}
+                </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex justify-end space-x-4">
                 {isEditing ? (
                   <>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>
@@ -102,7 +163,7 @@ export default function ProfilePage() {
                     <Button onClick={handleSave}>Save Changes</Button>
                   </>
                 ) : (
-                  <Button onClick={() => router.push("/profile/edit")}>Edit Profile</Button>
+                  <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
                 )}
               </CardFooter>
             </Card>
@@ -122,7 +183,11 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Member Since</p>
-                  <p className="text-sm">April 2025</p>
+                  <p className="text-sm">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Last Updated</p>
+                  <p className="text-sm">{user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
                 </div>
               </CardContent>
             </Card>
