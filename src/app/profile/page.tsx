@@ -189,6 +189,15 @@ export default function ProfilePage() {
                   <p className="text-sm font-medium">Last Updated</p>
                   <p className="text-sm">{user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
                 </div>
+                <div className="pt-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => window.location.href = '/auth/forgot-password'}
+                  >
+                    Change Password
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

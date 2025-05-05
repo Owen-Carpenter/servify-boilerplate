@@ -301,7 +301,7 @@ export default function DashboardPage() {
                     <Button 
                       variant="outline" 
                       className="w-full bg-white"
-                      onClick={() => router.push('/profile/edit')}
+                      onClick={() => router.push('/profile')}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       View Full Profile
@@ -568,7 +568,7 @@ export default function DashboardPage() {
                     <Button 
                       variant="outline" 
                       className="w-full bg-white"
-                      onClick={() => router.push('/profile/edit')}
+                      onClick={() => router.push('/profile')}
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Edit Profile
@@ -623,7 +623,13 @@ export default function DashboardPage() {
                           <p className="font-medium">Password</p>
                           <p className="text-sm text-muted-foreground">Last changed 3 months ago</p>
                         </div>
-                        <Button variant="outline" className="bg-white">Change Password</Button>
+                        <Button 
+                          variant="outline" 
+                          className="bg-white"
+                          onClick={() => router.push('/auth/forgot-password')}
+                        >
+                          Change Password
+                        </Button>
                       </div>
                     </div>
                     

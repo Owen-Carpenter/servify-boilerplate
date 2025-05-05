@@ -33,6 +33,7 @@ export default function LoginPage() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
   const registrationSuccess = searchParams?.get('registered') === 'true';
   const verificationSuccess = searchParams?.get('verified') === 'true';
+  const passwordResetSuccess = searchParams?.get('reset') === 'success';
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -117,6 +118,16 @@ export default function LoginPage() {
                 <AlertTitle>Email Verified</AlertTitle>
                 <AlertDescription className="text-emerald-600">
                   Your email has been verified. You can now sign in to your account.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {passwordResetSuccess && (
+              <Alert className="bg-emerald-50 border-emerald-200">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <AlertTitle>Password Reset Successful</AlertTitle>
+                <AlertDescription className="text-emerald-600">
+                  Your password has been reset successfully. You can now sign in with your new password.
                 </AlertDescription>
               </Alert>
             )}
