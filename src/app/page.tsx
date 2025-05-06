@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { MessageSquare, Star, MapPin, Mail, Phone, Shield, Clock } from "lucide-react";
+import { MessageSquare, Star, MapPin, Mail, Phone, Shield, Clock, DollarSign, ChevronRight } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -11,14 +11,43 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { initScrollAnimations } from "@/lib/scroll-animations";
+import { Service } from "@/lib/services";
+import { getServices } from "@/lib/supabase-services";
+
+// Format category name for display
+const formatCategoryName = (category: string) => {
+  if (category === "all") return "All Services";
+  return category.charAt(0).toUpperCase() + category.slice(1);
+};
 
 export default function HomePage() {
+  const [popularServices, setPopularServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // Initialize scroll animations
   useEffect(() => {
     const cleanup = initScrollAnimations();
     return cleanup;
+  }, []);
+
+  // Fetch popular services
+  useEffect(() => {
+    async function fetchPopularServices() {
+      setLoading(true);
+      try {
+        const services = await getServices();
+        // Get first 3 services as popular services
+        setPopularServices(services.slice(0, 3));
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        setLoading(false);
+      }
+    }
+    
+    fetchPopularServices();
   }, []);
 
   return (
@@ -249,33 +278,59 @@ export default function HomePage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {servicePreviewData.map((service, index) => (
-              <div key={service.id} className={`relative h-full reveal ${index === 0 ? 'reveal-left' : index === 2 ? 'reveal-right' : ''} delay-${index * 100}`}>
-                <Link href={`/services/${service.id}`} className="absolute inset-0 z-10" aria-label={`View ${service.name} details`}>
-                  <span className="sr-only">View {service.name} details</span>
-                </Link>
-                <Card className="h-full border-0 shadow-md card-hover backdrop-blur-sm bg-white/10 border border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-white">{service.name}</CardTitle>
-                    <CardDescription className="text-white/80">{service.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between text-sm text-white/80">
-                      <span>Duration: {service.duration}</span>
-                      <span className="font-medium text-accent">${service.price}</span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="border-t border-white/10 pt-4 relative">
-                    <Button 
-                      className="w-full servify-btn-secondary"
-                    >
-                      Book Now
-                    </Button>
-                  </CardFooter>
-                </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {loading ? (
+              <div className="col-span-3 flex justify-center items-center py-20">
+                <div className="text-white text-lg">Loading services...</div>
               </div>
-            ))}
+            ) : popularServices.length > 0 ? (
+              popularServices.map((service, index) => (
+                <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300">
+                  <Card className="h-full overflow-hidden transition-all duration-300
+                    border border-white/20 shadow-xl
+                    bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md
+                    hover:shadow-[0_10px_40px_rgba(255,255,255,0.15)] hover:border-white/30 relative group">
+                    <div className="absolute inset-0 flex items-center justify-center text-[250px] font-bold opacity-[0.15] pointer-events-none select-none z-0 animate-float-slow bg-clip-text text-transparent bg-gradient-to-br from-white to-white/30" style={{ '--rotation': `${(index % 3) - 1}deg` } as React.CSSProperties}>
+                      {(index + 1).toString().padStart(2, '0')}
+                    </div>
+                    <CardHeader className="pb-2 relative z-10">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-xl text-primary font-bold group-hover:text-primary/80 transition-colors">{service.title}</CardTitle>
+                          <CardDescription className="mt-1 text-white/80">{service.details}</CardDescription>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white">
+                          {formatCategoryName(service.category)}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                      <div className="flex justify-between text-sm text-white/70 mt-2">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1 text-white/90" />
+                          <span>{service.time}</span>
+                        </div>
+                        <div className="flex items-center font-medium">
+                          <DollarSign className="h-4 w-4 mr-1 text-accent group-hover:text-accent/80 transition-colors" />
+                          <span className="text-accent group-hover:text-accent/80 transition-colors">{service.price}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="border-t border-white/10 pt-4 relative z-10">
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-white 
+                        backdrop-blur-sm transition-all duration-200 group-hover:shadow-lg group-hover:scale-[1.02]">
+                        <span>Book Now</span>
+                        <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg">
+                <p className="text-white text-lg">No services available at the moment.</p>
+              </div>
+            )}
           </div>
           
           <div className="mt-12 text-center reveal">
@@ -546,34 +601,6 @@ export default function HomePage() {
     </div>
   );
 }
-
-// Sample data for service preview
-const servicePreviewData = [
-  {
-    id: 1,
-    name: "Business Consultation",
-    description: "Strategic guidance for your business from experienced professionals.",
-    duration: "60 min",
-    price: 150,
-    category: "consultation"
-  },
-  {
-    id: 2,
-    name: "Hair Styling",
-    description: "Get a fresh new look with our expert hair stylists.",
-    duration: "45 min",
-    price: 85,
-    category: "beauty"
-  },
-  {
-    id: 3,
-    name: "Home Cleaning",
-    description: "Professional cleaning services for a spotless home.",
-    duration: "120 min",
-    price: 120,
-    category: "home"
-  }
-];
 
 // Sample testimonials data
 const testimonials = [
