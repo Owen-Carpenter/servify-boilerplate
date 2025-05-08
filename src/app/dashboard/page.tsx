@@ -37,9 +37,51 @@ export default function DashboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [supabaseBookings, setSupabaseBookings] = useState<SupabaseBooking[]>([]);
 
-  // Group appointments by status
-  const upcomingAppointments = appointments.filter(app => app.status === 'confirmed' || app.status === 'pending');
-  const pastAppointments = appointments.filter(app => app.status === 'completed' || app.status === 'cancelled');
+  // Group appointments by status and date
+  const today = new Date();
+  
+  // Helper function to get the display status for an appointment
+  const getDisplayStatus = (appointment: Appointment) => {
+    // If the appointment is confirmed but in the past, show as completed
+    if (appointment.status === 'confirmed' && new Date(appointment.date) < today) {
+      return 'completed';
+    }
+    return appointment.status;
+  };
+  
+  const upcomingAppointments = appointments.filter(app => 
+    (app.status === 'confirmed' || app.status === 'pending') && 
+    new Date(app.date) >= today
+  );
+  
+  const pastAppointments = appointments.filter(app => 
+    app.status === 'completed' || 
+    app.status === 'cancelled' || 
+    (app.status === 'confirmed' && new Date(app.date) < today)
+  );
+  
+  // Get adjusted booking counts to reflect display status
+  const adjustedBookingCounts = {
+    pending: bookingCounts.pending,
+    confirmed: bookingCounts.confirmed,
+    completed: bookingCounts.completed,
+    cancelled: bookingCounts.cancelled
+  };
+  
+  // For each appointment, update the counts if its display status differs from actual status
+  appointments.forEach(appointment => {
+    const actualStatus = appointment.status;
+    const displayStatus = getDisplayStatus(appointment);
+    
+    if (actualStatus !== displayStatus) {
+      // Decrement count for actual status
+      if (adjustedBookingCounts[actualStatus as keyof typeof adjustedBookingCounts] > 0) {
+        adjustedBookingCounts[actualStatus as keyof typeof adjustedBookingCounts]--;
+      }
+      // Increment count for display status
+      adjustedBookingCounts[displayStatus as keyof typeof adjustedBookingCounts]++;
+    }
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -215,7 +257,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg py-8 px-4 sm:px-6">
+    <div className="min-h-screen gradient-bg pt-24 pb-8 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="relative">
           <div className="absolute inset-0 opacity-10">
@@ -323,9 +365,9 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold text-lg">{upcomingAppointments[0].serviceName}</h3>
                           <Badge className={
-                            upcomingAppointments[0].status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                            getDisplayStatus(upcomingAppointments[0]) === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }>
-                            {upcomingAppointments[0].status.charAt(0).toUpperCase() + upcomingAppointments[0].status.slice(1)}
+                            {getDisplayStatus(upcomingAppointments[0]).charAt(0).toUpperCase() + getDisplayStatus(upcomingAppointments[0]).slice(1)}
                           </Badge>
                         </div>
                         <div className="space-y-2">
@@ -392,7 +434,7 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-muted-foreground text-sm">Upcoming</p>
-                          <p className="text-2xl font-bold">{bookingCounts.pending + bookingCounts.confirmed}</p>
+                          <p className="text-2xl font-bold">{adjustedBookingCounts.pending + adjustedBookingCounts.confirmed}</p>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                           <Calendar className="h-6 w-6 text-primary" />
@@ -402,7 +444,7 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-muted-foreground text-sm">Completed</p>
-                          <p className="text-2xl font-bold">{bookingCounts.completed}</p>
+                          <p className="text-2xl font-bold">{adjustedBookingCounts.completed}</p>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
                           <BadgeCheck className="h-6 w-6 text-green-600" />
@@ -412,14 +454,14 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-muted-foreground text-sm">Cancelled</p>
-                          <p className="text-2xl font-bold">{bookingCounts.cancelled}</p>
+                          <p className="text-2xl font-bold">{adjustedBookingCounts.cancelled}</p>
                         </div>
                         <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
                           <X className="h-6 w-6 text-red-600" />
                         </div>
                       </div>
 
-                      {(bookingCounts.pending + bookingCounts.confirmed + bookingCounts.completed + bookingCounts.cancelled) === 0 && (
+                      {(adjustedBookingCounts.pending + adjustedBookingCounts.confirmed + adjustedBookingCounts.completed + adjustedBookingCounts.cancelled) === 0 && (
                         <div className="text-center mt-4 p-2 bg-blue-50 rounded-md text-sm text-blue-700">
                           No booking activity yet. Browse services to make your first booking!
                         </div>
@@ -432,7 +474,7 @@ export default function DashboardPage() {
                       className="w-full bg-white"
                       onClick={() => router.push('/services')}
                     >
-                      {(bookingCounts.pending + bookingCounts.confirmed + bookingCounts.completed + bookingCounts.cancelled) > 0 
+                      {(adjustedBookingCounts.pending + adjustedBookingCounts.confirmed + adjustedBookingCounts.completed + adjustedBookingCounts.cancelled) > 0 
                         ? "View History" 
                         : "Browse Services"}
                     </Button>
@@ -475,10 +517,10 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
                             <Badge className={
-                              appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              getDisplayStatus(appointment) === 'confirmed' ? 'bg-green-100 text-green-800' :
                               'bg-yellow-100 text-yellow-800'
                             }>
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                              {getDisplayStatus(appointment).charAt(0).toUpperCase() + getDisplayStatus(appointment).slice(1)}
                             </Badge>
                             <div className="flex gap-2 mt-2 sm:mt-0">
                               <Button
@@ -655,10 +697,14 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="p-0">
                       <div className="divide-y">
-                        {pastAppointments.map((appointment) => (
+                        {pastAppointments.map((appointment) => {
+                          // Get the display status for this appointment
+                          const displayStatus = getDisplayStatus(appointment);
+                          
+                          return (
                           <div key={appointment.id} className="p-4 flex items-center">
                             <div className="mr-4">
-                              {appointment.status === 'completed' ? (
+                              {displayStatus === 'completed' ? (
                                 <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
                                   <BadgeCheck className="h-5 w-5 text-green-600" />
                                 </div>
@@ -678,13 +724,13 @@ export default function DashboardPage() {
                               </div>
                             </div>
                             <Badge className={
-                              appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              displayStatus === 'completed' ? 'bg-green-100 text-green-800' :
                               'bg-red-100 text-red-800'
                             }>
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                              {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
                             </Badge>
                           </div>
-                        ))}
+                        )})}
                       </div>
                     </CardContent>
                   </Card>
@@ -706,7 +752,10 @@ export default function DashboardPage() {
         {/* Appointment Calendar at the bottom */}
         <div className="mt-8">
           <AppointmentCalendar 
-            appointments={appointments} 
+            appointments={appointments.map(appointment => ({
+              ...appointment,
+              status: getDisplayStatus(appointment)
+            }))} 
             onSelectEvent={handleSelectAppointment}
           />
         </div>
