@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 // import { Service } from '@/lib/services'; // Assuming Service type is available
-import { Appointment } from '@/lib/appointments'; // Assuming Appointment type is available
+import { Appointment, updateAppointmentDateTime } from '@/lib/appointments'; // Assuming Appointment type is available and import updateAppointmentDateTime
 // import { getAppointmentById, updateAppointmentDateTime } from '@/lib/appointments'; // Placeholder functions
 import { ArrowLeft, CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -85,12 +85,14 @@ export default function RescheduleAppointmentPage() {
 
     setIsSubmitting(true);
     try {
-      // const success = await updateAppointmentDateTime(appointment.id, selectedDate, selectedTime);
-      // For now, simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000)); 
-      const success = true; 
+      // Update the appointment using the real implementation
+      const updatedAppointment = await updateAppointmentDateTime(
+        appointment.id, 
+        selectedDate, 
+        selectedTime
+      );
 
-      if (success) {
+      if (updatedAppointment) {
         toast.success('Appointment rescheduled successfully!');
         router.push(`/appointments/${appointment.id}`);
       } else {

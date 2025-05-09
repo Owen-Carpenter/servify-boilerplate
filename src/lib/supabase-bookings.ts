@@ -241,4 +241,38 @@ export async function getBookingCountsByStatus(userId?: string): Promise<{ pendi
     console.error("Error in getBookingCountsByStatus:", error);
     return { pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
   }
+}
+
+/**
+ * Update a booking's date and time
+ * @param id The booking ID
+ * @param appointmentDate The new appointment date in YYYY-MM-DD format
+ * @param appointmentTime The new appointment time
+ * @returns Success status
+ */
+export async function updateBookingDateTime(
+  id: string, 
+  appointmentDate: string, 
+  appointmentTime: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ 
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error updating booking date/time:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in updateBookingDateTime:", error);
+    return false;
+  }
 } 

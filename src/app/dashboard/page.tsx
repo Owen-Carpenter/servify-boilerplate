@@ -534,6 +534,14 @@ export default function DashboardPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
+                                onClick={() => router.push(`/appointments/${appointment.id}/reschedule`)}
+                              >
+                                Reschedule
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
                                 onClick={() => handleCancelAppointment(appointment.id)}
                               >

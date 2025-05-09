@@ -157,4 +157,68 @@ export async function cancelAppointment(appointmentId: string, userId?: string):
     
     return null;
   }
+}
+
+/**
+ * Reschedule an appointment by ID
+ * @param appointmentId The ID of the appointment to reschedule
+ * @param newDate The new date for the appointment
+ * @param newTime The new time for the appointment
+ * @param userId Optional user ID to pass to Supabase
+ * @returns The updated appointment or null if not found
+ */
+export async function updateAppointmentDateTime(
+  appointmentId: string, 
+  newDate: Date, 
+  newTime: string, 
+  userId?: string
+): Promise<Appointment | null> {
+  try {
+    // Use the server API to reschedule the appointment
+    const response = await fetch('/api/appointments/reschedule', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        appointmentId,
+        appointmentDate: newDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        appointmentTime: newTime,
+        userId
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok || !data.success) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: data.message || "There was a problem rescheduling your appointment.",
+      });
+      return null;
+    }
+    
+    // Refresh the appointments list to get the updated data
+    const appointments = await getAppointments(userId);
+    const updatedAppointment = appointments.find(a => a.id === appointmentId);
+    
+    toast({
+      variant: "success",
+      title: "Appointment Rescheduled",
+      description: "Your appointment has been successfully rescheduled",
+    });
+    
+    return updatedAppointment || null;
+  } catch (error) {
+    console.error("Error in updateAppointmentDateTime:", error);
+    
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to reschedule appointment. Please try again.",
+    });
+    
+    return null;
+  }
 } 
