@@ -221,4 +221,36 @@ export async function updateAppointmentDateTime(
     
     return null;
   }
+}
+
+/**
+ * Get a single appointment by ID
+ * @param appointmentId The ID of the appointment to fetch
+ * @param userId Optional user ID to pass to Supabase
+ * @returns The appointment or null if not found
+ */
+export async function getAppointmentById(appointmentId: string, userId?: string): Promise<Appointment | null> {
+  try {
+    // Fetch the booking from Supabase using our API
+    const response = await fetch(`/api/bookings/${appointmentId}`);
+    
+    if (!response.ok) {
+      console.error("Error fetching appointment:", response.statusText);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.booking) {
+      console.error("No booking data returned:", data.message);
+      return null;
+    }
+    
+    // Map the booking to our Appointment interface
+    const appointment = mapSupabaseBookingToAppointment(data.booking);
+    return appointment;
+  } catch (error) {
+    console.error("Error in getAppointmentById:", error);
+    return null;
+  }
 } 

@@ -5,52 +5,115 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-// import { Service } from '@/lib/services'; // Assuming Service type is available
-import { Appointment, updateAppointmentDateTime } from '@/lib/appointments'; // Assuming Appointment type is available and import updateAppointmentDateTime
-// import { getAppointmentById, updateAppointmentDateTime } from '@/lib/appointments'; // Placeholder functions
-import { ArrowLeft, CalendarIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Appointment, updateAppointmentDateTime, getAppointmentById } from '@/lib/appointments';
+import { ArrowLeft, CalendarIcon, Loader2, Clock } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSession } from 'next-auth/react';
 
+// All possible time slots
+const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
 
-// Available time slots - would come from real data in production, considering existing bookings
-const timeSlots = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
+// Define the booking type to avoid 'any'
+interface DbBooking {
+  id: string;
+  user_id: string;
+  service_id: string;
+  service_name: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  payment_status: string;
+  payment_intent: string;
+  amount_paid: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// We'll replace this with real data from the API
+// const MOCK_BOOKINGS = [
+//   { id: "booking1", date: "2025-05-08", time: "9:00 AM", duration: "60 min" },
+//   { id: "booking2", date: "2025-05-08", time: "11:00 AM", duration: "90 min" },
+//   { id: "booking3", date: "2025-05-09", time: "2:00 PM", duration: "60 min" },
+// ];
 
 export default function RescheduleAppointmentPage() {
   const router = useRouter();
   const params = useParams();
+  const { data: session } = useSession();
   const appointmentId = params.id as string;
+  const userId = session?.user?.id;
 
   const [appointment, setAppointment] = useState<Appointment | null>(null);
-  // const [service, setService] = useState<Service | null>(null); // We might need service details too
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>(ALL_TIME_SLOTS);
+  const [timeSlotDisplay, setTimeSlotDisplay] = useState<Record<string, { available: boolean; reason?: string }>>({});
+  const [existingBookings, setExistingBookings] = useState<DbBooking[]>([]);
+
+  // Helper function to parse time strings to minutes
+  const parseTimeToMinutes = (timeStr: string) => {
+    const [hourMin, period] = timeStr.split(' ');
+    const [hour, minute] = hourMin.split(':').map(Number);
+    let hours = hour;
+    if (period === 'PM' && hour < 12) hours += 12;
+    if (period === 'AM' && hour === 12) hours = 0;
+    return hours * 60 + minute;
+  };
+
+  // Check if two time ranges overlap
+  const isTimeOverlapping = (time1: string, duration1: number, time2: string, duration2: number) => {
+    const time1Start = parseTimeToMinutes(time1);
+    const time1End = time1Start + duration1;
+    
+    const time2Start = parseTimeToMinutes(time2);
+    const time2End = time2Start + duration2;
+    
+    return (time1Start < time2End && time1End > time2Start);
+  };
+
+  // Format minutes to time display
+  const formatMinutesToTimeDisplay = (minutes: number) => {
+    let hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    
+    if (hours > 12) hours -= 12;
+    else if (hours === 0) hours = 12;
+    
+    return `${hours}:${mins.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Fetch all bookings when component mounts
+  useEffect(() => {
+    const fetchAllBookings = async () => {
+      try {
+        const response = await fetch('/api/bookings/all');
+        if (!response.ok) {
+          throw new Error('Failed to fetch bookings');
+        }
+        const data = await response.json();
+        setExistingBookings(data.bookings || []);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        // Fallback to empty bookings array
+        setExistingBookings([]);
+      }
+    };
+    
+    fetchAllBookings();
+  }, []);
 
   useEffect(() => {
     if (appointmentId) {
       const fetchAppointmentDetails = async () => {
         setIsLoading(true);
         try {
-          // const apptData = await getAppointmentById(appointmentId); 
-          // Simulate fetching data
-          const apptData: Appointment | null = {
-            id: appointmentId,
-            serviceId: 'service123', // Added required field
-            serviceName: 'Sample Service',
-            date: new Date(), 
-            time: '10:00 AM',
-            status: 'confirmed',
-            providerName: 'Provider X',
-            location: 'Main Office',
-            duration: '60 min',
-            price: 50,
-            bookingDate: new Date(), // Added required field
-            category: 'sample-category' // Added required field
-          };
+          const apptData = await getAppointmentById(appointmentId);
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           if (apptData) {
@@ -73,6 +136,86 @@ export default function RescheduleAppointmentPage() {
     }
   }, [appointmentId, router]);
 
+  // Update available time slots when date changes
+  useEffect(() => {
+    if (!selectedDate || !appointment) return;
+    
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    const appointmentDurationMinutes = parseInt(appointment.duration.split(' ')[0], 10);
+    
+    // Get bookings for the selected date, excluding the current appointment
+    const dateBookings = existingBookings.filter(booking => {
+      // Format the booking date to yyyy-MM-dd for comparison
+      const bookingDate = booking.appointment_date.includes('T') 
+        ? format(parseISO(booking.appointment_date), "yyyy-MM-dd")
+        : booking.appointment_date;
+      
+      return bookingDate === formattedDate && 
+        booking.id !== appointment.id &&
+        (booking.status === 'confirmed' || booking.status === 'pending');
+    });
+    
+    // Create a display object for each time slot
+    const timeDisplay: Record<string, { available: boolean; reason?: string }> = {};
+    
+    // Check each time slot against existing bookings
+    const available = ALL_TIME_SLOTS.filter(timeSlot => {
+      // Check if this time slot overlaps with any existing booking
+      const overlappingBooking = dateBookings.find(booking => {
+        // Assume a default duration of 60 minutes if not specified
+        const bookingDurationMin = 60;
+        
+        return isTimeOverlapping(
+          timeSlot, 
+          appointmentDurationMinutes, 
+          booking.appointment_time, 
+          bookingDurationMin
+        );
+      });
+      
+      // Store availability and reason
+      if (overlappingBooking) {
+        const bookingDurationMin = 60; // Default duration for demonstration
+        const bookingTimeStart = parseTimeToMinutes(overlappingBooking.appointment_time);
+        const bookingTimeEnd = bookingTimeStart + bookingDurationMin;
+        
+        timeDisplay[timeSlot] = {
+          available: false,
+          reason: `Conflicts with ${overlappingBooking.service_name} from ${overlappingBooking.appointment_time} to ${formatMinutesToTimeDisplay(bookingTimeEnd)}`
+        };
+        return false;
+      } else {
+        // Special case: If this is the original date and time of the appointment, it should be available
+        const isOriginalDateAndTime = 
+          format(new Date(appointment.date), "yyyy-MM-dd") === formattedDate && 
+          appointment.time === timeSlot;
+        
+        if (isOriginalDateAndTime) {
+          timeDisplay[timeSlot] = { 
+            available: true, 
+            reason: 'Your current appointment time'
+          };
+        } else {
+          timeDisplay[timeSlot] = { available: true };
+        }
+        return true;
+      }
+    });
+    
+    setTimeSlotDisplay(timeDisplay);
+    setAvailableTimeSlots(available);
+    
+    // If the currently selected time is no longer available, reset it
+    // But only if it's not the original appointment time on the original date
+    const isOriginalDateAndTime = 
+      format(new Date(appointment.date), "yyyy-MM-dd") === formattedDate && 
+      appointment.time === selectedTime;
+      
+    if (selectedTime && !available.includes(selectedTime) && !isOriginalDateAndTime) {
+      setSelectedTime("");
+    }
+  }, [selectedDate, appointment, selectedTime, existingBookings]);
+
   const handleBack = () => {
     router.back();
   };
@@ -83,18 +226,29 @@ export default function RescheduleAppointmentPage() {
       return;
     }
 
+    // Check if the selected date and time are the same as the original appointment
+    const isSameDateTime = 
+      format(selectedDate, "yyyy-MM-dd") === format(new Date(appointment.date), "yyyy-MM-dd") && 
+      selectedTime === appointment.time;
+
+    if (isSameDateTime) {
+      toast.info('You selected the same date and time as your current appointment.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Update the appointment using the real implementation
+      // Pass the user ID from the session if available
       const updatedAppointment = await updateAppointmentDateTime(
         appointment.id, 
         selectedDate, 
-        selectedTime
+        selectedTime,
+        userId
       );
 
       if (updatedAppointment) {
         toast.success('Appointment rescheduled successfully!');
-        router.push(`/appointments/${appointment.id}`);
+        router.push(`/dashboard?tab=appointments`);
       } else {
         toast.error('Failed to reschedule appointment. The selected slot may no longer be available.');
       }
@@ -160,9 +314,12 @@ export default function RescheduleAppointmentPage() {
             <CardHeader className="bg-gradient-to-r from-primary/10 to-indigo-600/10 border-b">
               <CardTitle className="text-2xl text-center">Reschedule Appointment</CardTitle>
               <CardDescription className="text-center">
-                Current: {format(new Date(appointment.date), "EEEE, MMMM d, yyyy")} at {appointment.time}
-                <br />
-                Service: {appointment.serviceName}
+                <div className="mb-1">Current: {format(new Date(appointment.date), "EEEE, MMMM d, yyyy")} at {appointment.time}</div>
+                <div className="mb-1">Service: {appointment.serviceName}</div>
+                <div className="flex items-center justify-center gap-1 text-sm">
+                  <Clock size={14} />
+                  Duration: {appointment.duration}
+                </div>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
@@ -174,7 +331,11 @@ export default function RescheduleAppointmentPage() {
                     onChange={(date: Date | null) => {
                       if (date) {
                         setSelectedDate(date);
-                        setSelectedTime(''); // Reset time when date changes
+                        // Keep the original time if selecting the original date
+                        const isSameDate = date.toDateString() === new Date(appointment.date).toDateString();
+                        if (!isSameDate) {
+                          setSelectedTime(''); // Reset time when date changes to non-original date
+                        }
                       }
                     }}
                     minDate={new Date()} // Prevent selecting past dates
@@ -237,23 +398,85 @@ export default function RescheduleAppointmentPage() {
               
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Select New Time</label>
-                <Select 
-                  value={selectedTime}
-                  onValueChange={(value) => setSelectedTime(value)}
-                  disabled={!selectedDate}
-                >
-                  <SelectTrigger className="w-full border rounded-md h-10">
-                    <SelectValue placeholder="Select a time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* TODO: Filter time slots based on selectedDate and service duration to avoid conflicts */}
-                    {timeSlots.map((time) => (
-                      <SelectItem key={time} value={time} className="cursor-pointer">
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {selectedDate && availableTimeSlots.length === 0 ? (
+                  <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded border border-amber-200">
+                    No available time slots for this date. Please select another date.
+                  </div>
+                ) : selectedDate ? (
+                  <>
+                    <Select 
+                      value={selectedTime}
+                      onValueChange={(value) => setSelectedTime(value)}
+                      disabled={!selectedDate || availableTimeSlots.length === 0}
+                    >
+                      <SelectTrigger className="w-full border rounded-md h-10">
+                        <SelectValue placeholder="Select a time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ALL_TIME_SLOTS.map((time) => {
+                          const timeInfo = timeSlotDisplay[time];
+                          const isAvailable = timeInfo?.available !== false;
+                          const isCurrentAppointment = 
+                            format(selectedDate, "yyyy-MM-dd") === format(new Date(appointment.date), "yyyy-MM-dd") && 
+                            time === appointment.time;
+                            
+                          return (
+                            <SelectItem 
+                              key={time} 
+                              value={time} 
+                              disabled={!isAvailable}
+                              className={`cursor-pointer ${!isAvailable ? 'opacity-50' : ''} 
+                                ${isCurrentAppointment ? 'bg-blue-50' : ''}`}
+                            >
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1">
+                                  <span>{time}</span>
+                                  {isCurrentAppointment && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Current</span>
+                                  )}
+                                </div>
+                                {!isAvailable && (
+                                  <span className="text-xs text-red-500">
+                                    {timeInfo?.reason || 'Unavailable'}
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <div className="mt-2 text-xs text-gray-600">
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 bg-primary/20 rounded-full mr-2"></div>
+                        <span>Available times</span>
+                      </div>
+                      <div className="flex items-center mb-1">
+                        <div className="w-3 h-3 bg-blue-100 rounded-full mr-2"></div>
+                        <span>Your current appointment time</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-gray-200 rounded-full mr-2"></div>
+                        <span>Times with existing bookings</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">Please select a date first</p>
+                )}
+                
+                {selectedDate && selectedTime && (
+                  <div className="text-xs text-gray-600 mt-2">
+                    <p className="font-medium">Appointment duration: {appointment.duration}</p>
+                    <p>Your appointment will end at approximately {
+                      (() => {
+                        const startTime = parseTimeToMinutes(selectedTime);
+                        const endTime = startTime + parseInt(appointment.duration.split(' ')[0], 10);
+                        return formatMinutesToTimeDisplay(endTime);
+                      })()
+                    }</p>
+                  </div>
+                )}
               </div>
 
               {selectedDate && selectedTime && (
@@ -273,7 +496,13 @@ export default function RescheduleAppointmentPage() {
               <div className="w-full space-y-4">
                 <Button 
                   onClick={handleReschedule} 
-                  disabled={!selectedDate || !selectedTime || isSubmitting || (selectedDate.toDateString() === new Date(appointment.date).toDateString() && selectedTime === appointment.time)}
+                  disabled={
+                    !selectedDate || 
+                    !selectedTime || 
+                    isSubmitting || 
+                    (selectedDate.toDateString() === new Date(appointment.date).toDateString() && 
+                     selectedTime === appointment.time)
+                  }
                   className="w-full h-12 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-white font-medium text-lg"
                 >
                   {isSubmitting ? (
@@ -298,6 +527,7 @@ export default function RescheduleAppointmentPage() {
           </Card>
         </div>
       </div>
+
       <style jsx global>{`
         .react-datepicker {
           font-family: inherit !important;

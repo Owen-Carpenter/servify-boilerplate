@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,27 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { Service } from "@/lib/services";
 import { Clock, ArrowLeft, MapPin, Check, DollarSign, CalendarIcon } from "lucide-react";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, parseISO } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+
+// All possible time slots
+const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
+
+interface DbBooking {
+  id: string;
+  user_id: string;
+  service_id: string;
+  service_name: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  payment_status: string;
+  payment_intent: string;
+  amount_paid: number;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ServiceDetailClientProps {
   service: Service | null;
@@ -23,11 +41,199 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("main-office");
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>(ALL_TIME_SLOTS);
+  const [timeSlotDisplay, setTimeSlotDisplay] = useState<Record<string, { available: boolean; reason?: string }>>({});
+  const [existingBookings, setExistingBookings] = useState<DbBooking[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   
   // Handle back button click
   const handleBack = () => {
     router.back();
   };
+
+  // Helper function to parse time strings to minutes
+  const parseTimeToMinutes = (timeStr: string) => {
+    const [hourMin, period] = timeStr.split(' ');
+    const [hour, minute] = hourMin.split(':').map(Number);
+    let hours = hour;
+    if (period === 'PM' && hour < 12) hours += 12;
+    if (period === 'AM' && hour === 12) hours = 0;
+    return hours * 60 + minute;
+  };
+
+  // Check if two time ranges overlap
+  const isTimeOverlapping = (time1: string, duration1: number, time2: string, duration2: number) => {
+    const time1Start = parseTimeToMinutes(time1);
+    const time1End = time1Start + duration1;
+    
+    const time2Start = parseTimeToMinutes(time2);
+    const time2End = time2Start + duration2;
+    
+    return (time1Start < time2End && time1End > time2Start);
+  };
+
+  // Format minutes to time display
+  const formatMinutesToTimeDisplay = (minutes: number) => {
+    let hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    
+    if (hours > 12) hours -= 12;
+    else if (hours === 0) hours = 12;
+    
+    return `${hours}:${mins.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Fetch existing bookings when component mounts
+  useEffect(() => {
+    const fetchExistingBookings = async () => {
+      setIsLoadingBookings(true);
+      try {
+        const response = await fetch('/api/bookings/all');
+        if (!response.ok) {
+          throw new Error('Failed to fetch bookings');
+        }
+        const data = await response.json();
+        setExistingBookings(data.bookings || []);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        // Fall back to using demo data if API fails
+        setExistingBookings([
+          {
+            id: "booking-1746753799783",
+            user_id: "521d0a1e-81b7-4df3-9081-e1435c028241",
+            service_id: "4a05b5fa-951f-4a05-a3f2-37b3c505eb45",
+            service_name: "Electrical Repairs",
+            appointment_date: "2025-05-09T05:00:00.000Z",
+            appointment_time: "9:00 AM",
+            status: "confirmed",
+            payment_status: "paid",
+            payment_intent: "cs_test_a1IZZSEVLvq7EQ4ZP6c8m56iiHnzG2TRBLxy5ugVsHfP7zGuZIDlUNw1v5",
+            amount_paid: 0.00,
+            created_at: "2025-05-09 01:23:20.502+00",
+            updated_at: "2025-05-09 01:23:33.047565+00"
+          },
+          {
+            id: "booking-1746754920144",
+            user_id: "521d0a1e-81b7-4df3-9081-e1435c028241",
+            service_id: "495fe372-ba26-4442-b583-6d7d187025a0",
+            service_name: "Financial Planning",
+            appointment_date: "2025-05-10T05:00:00.000Z",
+            appointment_time: "1:00 PM",
+            status: "confirmed",
+            payment_status: "paid",
+            payment_intent: "cs_test_a1JtZrjPyVcM2R8XpoWQU0Ff8FIcepCRFJzYZrPj52pYVKXRGNKpl6ukPy",
+            amount_paid: 0.00,
+            created_at: "2025-05-09 01:42:00.998+00",
+            updated_at: "2025-05-09 01:42:20.495138+00"
+          },
+          {
+            id: "booking-1746755802903",
+            user_id: "521d0a1e-81b7-4df3-9081-e1435c028241",
+            service_id: "4a05b5fa-951f-4a05-a3f2-37b3c505eb45",
+            service_name: "Electrical Repairs",
+            appointment_date: "2025-05-11T05:00:00.000Z",
+            appointment_time: "11:00 AM", 
+            status: "confirmed",
+            payment_status: "paid",
+            payment_intent: "cs_test_a1sJSLTNUjOf2thluxtioZsTajXMNT1yHjIC3u3lGu6zqelwDTJ02qHttz",
+            amount_paid: 0.00,
+            created_at: "2025-05-09 01:56:43.59+00",
+            updated_at: "2025-05-09 01:56:55.915853+00"
+          }
+        ]);
+      } finally {
+        setIsLoadingBookings(false);
+      }
+    };
+    
+    fetchExistingBookings();
+  }, []);
+
+  // Get service duration value in minutes
+  const getServiceDurationMinutes = (serviceTime: string): number => {
+    const durationMatch = serviceTime.match(/(\d+)/);
+    return durationMatch ? parseInt(durationMatch[1], 10) : 60;
+  };
+
+  // Get service duration for a specific service ID from existing bookings
+  const getServiceDurationByServiceId = (serviceId: string): number => {
+    // Find a service in mock data that matches to get its duration
+    const mockServices = [
+      { id: "4a05b5fa-951f-4a05-a3f2-37b3c505eb45", time: "100 min" }, // Electrical Repairs
+      { id: "495fe372-ba26-4442-b583-6d7d187025a0", time: "120 min" }, // Financial Planning
+    ];
+    
+    const mockService = mockServices.find(s => s.id === serviceId);
+    if (mockService) {
+      return getServiceDurationMinutes(mockService.time);
+    }
+    
+    // Default to 60 minutes if we can't determine service duration
+    return 60;
+  };
+
+  // Update available time slots when date changes
+  useEffect(() => {
+    if (!selectedDate || !service) return;
+    
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    const serviceDurationMinutes = getServiceDurationMinutes(service.time);
+    
+    // Get bookings for the selected date (active bookings only)
+    const dateBookings = existingBookings.filter(booking => {
+      // Parse ISO date and format it to yyyy-MM-dd
+      const bookingDate = booking.appointment_date.includes('T') 
+        ? format(parseISO(booking.appointment_date), "yyyy-MM-dd")
+        : booking.appointment_date;
+        
+      return bookingDate === formattedDate && 
+        (booking.status === 'confirmed' || booking.status === 'pending');
+    });
+    
+    // Create a display object for each time slot
+    const timeDisplay: Record<string, { available: boolean; reason?: string }> = {};
+    
+    // Check each time slot against existing bookings
+    const available = ALL_TIME_SLOTS.filter(timeSlot => {
+      // Check if this time slot overlaps with any existing booking
+      const overlappingBooking = dateBookings.find(booking => {
+        // Get the service duration for this booking's service
+        const bookingServiceDuration = getServiceDurationByServiceId(booking.service_id);
+        
+        return isTimeOverlapping(
+          timeSlot, 
+          serviceDurationMinutes, 
+          booking.appointment_time, 
+          bookingServiceDuration
+        );
+      });
+      
+      // Store availability and reason
+      if (overlappingBooking) {
+        const bookingDuration = getServiceDurationByServiceId(overlappingBooking.service_id);
+        const bookingTimeStart = parseTimeToMinutes(overlappingBooking.appointment_time);
+        const bookingTimeEnd = bookingTimeStart + bookingDuration;
+        
+        timeDisplay[timeSlot] = {
+          available: false,
+          reason: `Conflicts with ${overlappingBooking.service_name} from ${overlappingBooking.appointment_time} to ${formatMinutesToTimeDisplay(bookingTimeEnd)}`
+        };
+        return false;
+      } else {
+        timeDisplay[timeSlot] = { available: true };
+        return true;
+      }
+    });
+    
+    setTimeSlotDisplay(timeDisplay);
+    setAvailableTimeSlots(available);
+    
+    // If the currently selected time is no longer available, reset it
+    if (selectedTime && !available.includes(selectedTime)) {
+      setSelectedTime("");
+    }
+  }, [selectedDate, service, existingBookings, selectedTime]);
   
   // If service is null, show error state
   if (!service) {
@@ -48,7 +254,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
       </div>
     );
   }
-  
+
   // Handle booking
   const handleBooking = async () => {
     if (!selectedDate) {
@@ -109,9 +315,6 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
       toast.error("Failed to process your booking. Please try again.");
     }
   };
-  
-  // Available time slots - would come from real data in production
-  const timeSlots = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
   
   // Locations - would come from real data in production
   const locations = [
@@ -312,21 +515,73 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                   
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">Select Time</label>
-                    <Select 
-                      onValueChange={(value) => setSelectedTime(value)}
-                      disabled={!selectedDate}
-                    >
-                      <SelectTrigger className="w-full border rounded-md h-10">
-                        <SelectValue placeholder="Select a time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time} className="cursor-pointer">
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isLoadingBookings ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      </div>
+                    ) : selectedDate && availableTimeSlots.length === 0 ? (
+                      <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded border border-amber-200">
+                        No available time slots for this date. Please select another date.
+                      </div>
+                    ) : selectedDate ? (
+                      <>
+                        <Select 
+                          onValueChange={(value) => setSelectedTime(value)}
+                          disabled={!selectedDate || availableTimeSlots.length === 0}
+                          value={selectedTime}
+                        >
+                          <SelectTrigger className="w-full border rounded-md h-10">
+                            <SelectValue placeholder="Select a time" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ALL_TIME_SLOTS.map((time) => {
+                              const isAvailable = timeSlotDisplay[time]?.available !== false;
+                              return (
+                                <SelectItem 
+                                  key={time} 
+                                  value={time} 
+                                  disabled={!isAvailable}
+                                  className={`cursor-pointer ${!isAvailable ? 'opacity-50' : ''}`}
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{time}</span>
+                                    {!isAvailable && (
+                                      <span className="text-xs text-red-500">
+                                        {timeSlotDisplay[time]?.reason || 'Unavailable'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <div className="mt-2 text-xs text-gray-600">
+                          <div className="flex items-center mb-1">
+                            <div className="w-3 h-3 bg-primary/20 rounded-full mr-2"></div>
+                            <span>Available times</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-gray-200 rounded-full mr-2"></div>
+                            <span>Times with existing bookings</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">Please select a date first</p>
+                    )}
+                    {selectedDate && selectedTime && (
+                      <div className="text-xs text-gray-600 mt-2">
+                        <p className="font-medium">Service duration: {service.time}</p>
+                        <p>Your appointment will end at approximately {
+                          (() => {
+                            const startTime = parseTimeToMinutes(selectedTime);
+                            const endTime = startTime + parseInt(service.time.split(' ')[0], 10);
+                            return formatMinutesToTimeDisplay(endTime);
+                          })()
+                        }</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -389,7 +644,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
         </div>
       </div>
 
-      {/* Add these styles at the end of the file */}
+      {/* Styles */}
       <style jsx global>{`
         .react-datepicker {
           font-family: inherit !important;
