@@ -21,9 +21,10 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const { data: session, status } = useSession();
+  const [userProfile, setUserProfile] = React.useState<{ name: string | null }>({ name: null });
   
   const isAuthenticated = status === "authenticated";
-  const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "User";
+  const userName = userProfile.name || session?.user?.email?.split("@")[0] || "User";
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -37,6 +38,30 @@ export function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Fetch user profile data when authenticated
+  React.useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (status === "authenticated") {
+        try {
+          const response = await fetch("/api/user/profile");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          if (data.success && data.user) {
+            setUserProfile({
+              name: data.user.name
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [status]);
 
   // Updated navItems to only include Home and Services for everyone
   const navItems = [
