@@ -245,11 +245,11 @@ export function Navigation() {
                 <>
                   <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                     <Button 
-                      variant="outline" 
-                      className="w-48 border-white text-white hover:bg-white/10"
+                      variant="secondary" 
+                      className="w-48 bg-white text-[#6E3FC9] hover:bg-white/90 font-medium"
                     >
                       <User className="w-4 h-4 mr-2" />
-                      Profile
+                      <span>{userName}</span>
                     </Button>
                   </Link>
                   <Button 
