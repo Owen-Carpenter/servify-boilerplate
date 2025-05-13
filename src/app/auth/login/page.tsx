@@ -40,6 +40,8 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
 
+    console.log("Login attempt for:", email);
+
     try {
       const result = await signIn("credentials", {
         redirect: false,
@@ -47,20 +49,23 @@ export default function LoginPage() {
         password,
       });
 
+      console.log("Sign in result:", result);
+
       if (!result?.error) {
         router.push(callbackUrl);
       } else {
         setIsLoading(false);
-        setError(
-          result.error === "CredentialsSignin"
-            ? "Invalid email or password"
-            : result.error
-        );
+        if (result.error === "CredentialsSignin") {
+          setError("Invalid email or password. Please check your credentials and try again.");
+        } else {
+          setError(result.error);
+        }
+        console.error("Login error:", result.error);
       }
     } catch (error) {
+      console.error("Unexpected login error:", error);
       setIsLoading(false);
-      setError("An unexpected error occurred");
-      console.error("Login error:", error);
+      setError("An unexpected error occurred. Please try again later.");
     }
   }
 

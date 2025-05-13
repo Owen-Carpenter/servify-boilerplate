@@ -125,28 +125,56 @@ export default function DashboardPage() {
           // Continue loading the dashboard even if this fails
         }
         
-        // Build a profile object from session.user
-        let phone: string = "";
-        if (typeof session.user === "object" && session.user !== null && "phone" in session.user) {
-          phone = (session.user as { phone?: string }).phone || "";
+        // Fetch the latest user data from the API
+        const profileResponse = await fetch('/api/user/profile');
+        if (!profileResponse.ok) {
+          throw new Error('Failed to fetch profile data');
         }
-        setProfile({
-          id: userId,
-          name: session.user.name || session.user.email?.split("@")[0] || "User",
-          email: session.user.email || "",
-          role: (session.user.role as UserRole) || "user",
-          avatar: session.user.image || undefined,
-          phone,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-          preferences: {
-            notifications: true,
-            emailUpdates: true,
-            darkMode: false
-          },
-          address: undefined,
-          paymentMethods: []
-        });
+        
+        const profileData = await profileResponse.json();
+        if (profileData.success && profileData.user) {
+          const userData = profileData.user;
+          setProfile({
+            id: userId,
+            name: userData.name || userData.email?.split("@")[0] || "User",
+            email: userData.email || "",
+            role: (userData.role as UserRole) || "user",
+            avatar: session.user.image || undefined,
+            phone: userData.phone || "",
+            createdAt: userData.createdAt ? new Date(userData.createdAt) : new Date(),
+            lastLoginAt: new Date(),
+            preferences: {
+              notifications: true,
+              emailUpdates: true,
+              darkMode: false
+            },
+            address: undefined,
+            paymentMethods: []
+          });
+        } else {
+          // Fallback to session data if API call fails
+          let phone: string = "";
+          if (typeof session.user === "object" && session.user !== null && "phone" in session.user) {
+            phone = (session.user as { phone?: string }).phone || "";
+          }
+          setProfile({
+            id: userId,
+            name: session.user.name || session.user.email?.split("@")[0] || "User",
+            email: session.user.email || "",
+            role: (session.user.role as UserRole) || "user",
+            avatar: session.user.image || undefined,
+            phone,
+            createdAt: new Date(),
+            lastLoginAt: new Date(),
+            preferences: {
+              notifications: true,
+              emailUpdates: true,
+              darkMode: false
+            },
+            address: undefined,
+            paymentMethods: []
+          });
+        }
         
         // Get appointments - explicitly pass the user ID from NextAuth session
         console.log("Fetching appointments for user:", userId);
@@ -164,10 +192,6 @@ export default function DashboardPage() {
         if (bookingsData && Array.isArray(bookingsData)) {
           console.log("Fetched Supabase bookings:", bookingsData);
           setSupabaseBookings(bookingsData);
-          
-          // Note: we're not merging with appointments separately here
-          // because getAppointments() already does the conversion
-          // from SupabaseBooking to Appointment - see appointments.ts
         }
         
         // Get booking counts directly from Supabase - explicitly pass the user ID
@@ -587,10 +611,6 @@ export default function DashboardPage() {
                     <div>
                       <h3 className="text-sm font-medium text-muted-foreground mb-1">Phone</h3>
                       <p>{profile?.phone || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Address</h3>
-                      <p>{profile?.address?.street ? `${profile.address.street}, ${profile.address.city}, ${profile.address.state}` : 'Not provided'}</p>
                     </div>
                     {/* Payment Methods */}
                     <div>

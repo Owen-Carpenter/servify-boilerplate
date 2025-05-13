@@ -4,9 +4,8 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, User, Camera, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,16 +23,12 @@ interface ExtendedUser {
   image?: string | null;
   role?: string;
   phone?: string;
-  address?: string;
-  bio?: string;
 }
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }).optional(),
   phone: z.string().optional(),
-  address: z.string().optional(),
-  bio: z.string().max(160, { message: "Bio must not be longer than 160 characters." }).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -50,8 +45,6 @@ export default function ProfileEditPage() {
       name: "",
       email: "",
       phone: "",
-      address: "",
-      bio: "",
     },
   });
 
@@ -64,8 +57,6 @@ export default function ProfileEditPage() {
         name: user.name || "",
         email: user.email || "",
         phone: user.phone || "",
-        address: user.address || "",
-        bio: user.bio || "",
       });
       
       setAvatarSrc(user.image || null);
@@ -136,23 +127,14 @@ export default function ProfileEditPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Main Content with Gradient Background */}
-      <main className="flex-grow pt-24 pb-20 gradient-bg relative">
-        {/* Background elements similar to hero section */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute -top-20 -left-20 w-60 h-60 bg-white rounded-full animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-40 h-40 bg-white rounded-full animate-pulse delay-300"></div>
-          <div className="absolute bottom-10 left-1/4 w-20 h-20 bg-white rounded-full animate-pulse delay-200"></div>
-          <div className="absolute -bottom-10 right-1/3 w-30 h-30 bg-white rounded-full animate-pulse delay-400"></div>
-        </div>
-        
-        <div className="content-container relative z-10">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => router.back()}
-              className="mr-4 text-white hover:bg-white/20"
+    <div>
+      <main className="flex flex-col min-h-screen bg-gradient-to-b from-blue-950 to-indigo-900 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          <div className="flex items-center mb-8">
+            <Button 
+              variant="ghost" 
+              className="text-white mr-4" 
+              onClick={() => router.push("/profile")}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -160,40 +142,47 @@ export default function ProfileEditPage() {
             <h1 className="text-3xl font-bold text-white">Edit Profile</h1>
           </div>
           
-          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg mb-10">
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your profile information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex flex-col items-center space-y-4">
+          <Card className="mx-auto max-w-4xl bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                {/* Profile Photo Section */}
+                <div className="col-span-12 md:col-span-3 flex flex-col items-center space-y-4">
+                  <Avatar className="h-32 w-32">
+                    <AvatarImage src={avatarSrc || ""} alt="Profile" />
+                    <AvatarFallback className="bg-primary">
+                      <User className="h-12 w-12 text-white" />
+                    </AvatarFallback>
+                  </Avatar>
+                  
                   <div className="relative">
-                    <Avatar className="h-32 w-32">
-                      <AvatarImage src={avatarSrc || ""} alt={form.watch("name")} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                        {form.watch("name")?.charAt(0) || <User className="h-12 w-12" />}
-                      </AvatarFallback>
-                    </Avatar>
-                    <label htmlFor="avatar-upload" className="absolute -right-2 bottom-0 bg-primary text-white p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
-                      <Camera className="h-4 w-4" />
-                      <input 
-                        id="avatar-upload" 
-                        type="file" 
-                        accept="image/*"
-                        className="hidden" 
-                        onChange={handleAvatarChange}
-                      />
-                    </label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        document.getElementById("avatar-upload")?.click();
+                      }}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Change Photo
+                    </Button>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Click the camera icon to change your profile picture
-                  </p>
+                  
+                  <div className="text-center text-sm text-muted-foreground">
+                    <p>Upload a square image</p>
+                    <p>JPG or PNG, max 2MB</p>
+                  </div>
                 </div>
                 
-                <div className="flex-1">
+                {/* Form Section */}
+                <div className="col-span-12 md:col-span-9">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <FormField
@@ -203,7 +192,7 @@ export default function ProfileEditPage() {
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Your name" {...field} />
+                              <Input placeholder="Your full name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -215,65 +204,32 @@ export default function ProfileEditPage() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
-                              <Input placeholder="your.email@example.com" type="email" {...field} disabled />
+                              <Input 
+                                placeholder="Your email" 
+                                {...field} 
+                                disabled
+                                type="email"
+                              />
                             </FormControl>
                             <FormDescription>
-                              Your email address cannot be changed
+                              Email cannot be changed directly.
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="(123) 456-7890" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your address" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
                       <FormField
                         control={form.control}
-                        name="bio"
+                        name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Bio</FormLabel>
+                            <FormLabel>Phone Number</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Tell us a little about yourself"
-                                className="resize-none"
-                                {...field}
-                                rows={4}
-                              />
+                              <Input placeholder="(123) 456-7890" {...field} />
                             </FormControl>
-                            <FormDescription>
-                              Brief description for your profile. Max 160 characters.
-                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}

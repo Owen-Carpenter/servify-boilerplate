@@ -162,7 +162,6 @@ export async function updateUserProfile(userData: Partial<User>): Promise<User |
       name: userData.name,
       email: userData.email,
       phone: userData.phone,
-      address: userData.address,
       preferences: userData.preferences,
       updated_at: new Date().toISOString()
     };

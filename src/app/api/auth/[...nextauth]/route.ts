@@ -18,6 +18,7 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string;
+      phone?: string;
     }
   }
 }
@@ -25,6 +26,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
+    phone?: string;
   }
 }
 
@@ -53,27 +55,72 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error("Missing credentials:", { email: !!credentials?.email, password: !!credentials?.password });
           return null;
         }
 
         try {
+          console.log("Attempting Supabase login for:", credentials.email);
+          
           // Sign in with Supabase Auth
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           });
 
-          if (error || !data.user) {
-            console.error("Auth error:", error?.message);
+          if (error) {
+            console.error("Supabase auth error:", error.message, error);
             return null;
           }
 
+          if (!data?.user) {
+            console.error("No user returned from Supabase");
+            return null;
+          }
+
+          console.log("Supabase login successful, user ID:", data.user.id);
+          
           // Get user profile from users table
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from("users")
             .select("id, name, email, phone, role")
             .eq("id", data.user.id)
             .single();
+
+          if (profileError) {
+            console.error("Error fetching user profile:", profileError);
+            
+            // User exists in auth but not in users table, create a profile
+            if (profileError.code === 'PGRST116') { // No rows returned
+              console.log("User profile not found, creating one");
+              
+              const newProfile = {
+                id: data.user.id,
+                name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || null,
+                email: data.user.email,
+                phone: data.user.user_metadata?.phone || null,
+                role: "customer", // Default role
+              };
+              
+              const { error: insertError } = await supabase
+                .from("users")
+                .insert(newProfile);
+                
+              if (insertError) {
+                console.error("Error creating user profile:", insertError);
+              } else {
+                console.log("Created user profile successfully");
+                // Use the newly created profile
+                return {
+                  id: data.user.id,
+                  email: data.user.email,
+                  name: newProfile.name,
+                  phone: newProfile.phone,
+                  role: newProfile.role,
+                };
+              }
+            }
+          }
 
           // Return user with role information
           return {
@@ -96,11 +143,15 @@ const handler = NextAuth({
     strategy: "jwt",
   },
   
+  // Enable debug in development
+  debug: process.env.NODE_ENV === "development",
+  
   callbacks: {
     // Add role to JWT
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role || "customer";
+        token.phone = user.phone || "";
       }
       return token;
     },
@@ -109,6 +160,7 @@ const handler = NextAuth({
       if (session.user) {
         session.user.role = token.role as string;
         session.user.id = token.sub;
+        session.user.phone = token.phone as string;
       }
       return session;
     },
