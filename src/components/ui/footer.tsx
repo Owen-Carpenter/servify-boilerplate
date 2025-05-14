@@ -38,39 +38,39 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4 text-[#6E3FC9]">Services</h3>
             <ul className="space-y-2">
-              <li><Link href="/services" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Consultations</Link></li>
-              <li><Link href="/services" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Beauty & Wellness</Link></li>
-              <li><Link href="/services" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Home Services</Link></li>
-              <li><Link href="/services" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Professional Services</Link></li>
+              <li><Link href="/services?category=consulting" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Consultations</Link></li>
+              <li><Link href="/services?category=beauty" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Beauty & Wellness</Link></li>
+              <li><Link href="/services?category=maintenance" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Maintenance</Link></li>
+              <li><Link href="/services" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">All Services</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4 text-[#6E3FC9]">Company</h3>
             <ul className="space-y-2">
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">About Us</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Careers</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Blog</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Press</Link></li>
+              <li><Link href="/#about" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">About Us</Link></li>
+              <li><Link href="/#testimonials" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Reviews</Link></li>
+              <li><Link href="/#contact" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Contact</Link></li>
+              <li><Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Dashboard</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4 text-[#6E3FC9]">Legal</h3>
             <ul className="space-y-2">
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Privacy Policy</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Terms of Service</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Cookie Policy</Link></li>
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">GDPR</Link></li>
+              <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Terms of Service</Link></li>
+              <li><Link href="/cookie-policy" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Cookie Policy</Link></li>
+              <li><Link href="/gdpr" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">GDPR</Link></li>
             </ul>
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
           <p className="mb-4">© {new Date().getFullYear()} Servify. All rights reserved.</p>
           <div className="flex justify-center space-x-4">
-            <Link href="/" className="text-gray-400 hover:text-[#6E3FC9] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Support</Link>
+            <Link href="/support" className="text-gray-400 hover:text-[#6E3FC9] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Support</Link>
             <span className="text-gray-600">•</span>
-            <Link href="/" className="text-gray-400 hover:text-[#FF8A4C] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Contact</Link>
+            <Link href="/#contact" className="text-gray-400 hover:text-[#FF8A4C] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Contact</Link>
             <span className="text-gray-600">•</span>
-            <Link href="/" className="text-gray-400 hover:text-[#6E3FC9] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">FAQ</Link>
+            <Link href="/faq" className="text-gray-400 hover:text-[#6E3FC9] transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">FAQ</Link>
           </div>
         </div>
       </div>
