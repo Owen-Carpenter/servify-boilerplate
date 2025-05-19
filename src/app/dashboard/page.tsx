@@ -653,41 +653,6 @@ export default function DashboardPage() {
                       <CardTitle>Account Preferences</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
-                      <div>
-                        <h3 className="font-medium mb-3">Notification Settings</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Email Notifications</p>
-                              <p className="text-sm text-muted-foreground">Receive email notifications about your appointments</p>
-                            </div>
-                            <div className="h-6 w-11 bg-primary rounded-full relative cursor-pointer">
-                              <div className="h-5 w-5 bg-white rounded-full absolute top-0.5 right-0.5"></div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">SMS Notifications</p>
-                              <p className="text-sm text-muted-foreground">Receive text message reminders about your appointments</p>
-                            </div>
-                            <div className="h-6 w-11 bg-muted rounded-full relative cursor-pointer">
-                              <div className="h-5 w-5 bg-white rounded-full absolute top-0.5 left-0.5"></div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Marketing Emails</p>
-                              <p className="text-sm text-muted-foreground">Receive emails about new services and promotions</p>
-                            </div>
-                            <div className="h-6 w-11 bg-muted rounded-full relative cursor-pointer">
-                              <div className="h-5 w-5 bg-white rounded-full absolute top-0.5 left-0.5"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
                       <div className="space-y-3">
                         <h3 className="font-medium mb-1">Security</h3>
                         <div className="flex justify-between items-center">
