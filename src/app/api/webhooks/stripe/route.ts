@@ -82,6 +82,8 @@ export async function POST(req: Request) {
         if (updateError) {
           throw new Error(`Error updating booking: ${updateError.message}`);
         }
+        
+        console.log(`Successfully updated booking ${bookingId} to confirmed status`);
       } else {
         // If the booking doesn't exist yet (unlikely but possible), create it
         console.log('Creating new confirmed booking:', bookingId);

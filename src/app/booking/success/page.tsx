@@ -46,6 +46,22 @@ function BookingSuccessPageContent() {
           return;
         }
 
+        // First, trigger an update of any pending bookings that might have been paid
+        if (session?.user?.id) {
+          try {
+            await fetch('/api/bookings/updatePendingStatus', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ userId: session.user.id }),
+            });
+            console.log("Triggered update of pending bookings");
+          } catch (error) {
+            console.error("Error updating pending bookings:", error);
+          }
+        }
+
         const response = await fetch(`/api/bookings/details?sessionId=${sessionId}`, {
           credentials: "include"
         });

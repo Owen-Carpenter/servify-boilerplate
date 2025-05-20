@@ -63,9 +63,14 @@ export async function enhanceBookingsWithStripeData(
           // Add Stripe session data to the booking
           enhancedBookings[i].stripe_session = stripeSession;
           
-          // If payment is complete, set payment_status to paid
-          if (isComplete && enhancedBookings[i].payment_status === 'pending') {
-            enhancedBookings[i].payment_status = 'paid';
+          // If payment is complete, set payment_status to paid and status to confirmed
+          if (isComplete) {
+            if (enhancedBookings[i].payment_status === 'pending') {
+              enhancedBookings[i].payment_status = 'paid';
+            }
+            if (enhancedBookings[i].status === 'pending') {
+              enhancedBookings[i].status = 'confirmed';
+            }
           }
         }
       } catch (error) {

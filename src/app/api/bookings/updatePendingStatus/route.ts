@@ -71,6 +71,7 @@ export async function POST(req: Request) {
           
           if (!updateError) {
             updatedCount++;
+            console.log(`Successfully updated booking ${booking.id} from pending to confirmed`);
           } else {
             console.error(`Error updating booking ${booking.id}:`, updateError);
           }
