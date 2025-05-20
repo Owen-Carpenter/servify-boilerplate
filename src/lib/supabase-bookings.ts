@@ -275,4 +275,28 @@ export async function updateBookingDateTime(
     console.error("Error in updateBookingDateTime:", error);
     return false;
   }
+}
+
+/**
+ * Get all bookings for admin
+ * @returns An array of all bookings in the system
+ */
+export async function getAllBookings(): Promise<SupabaseBooking[]> {
+  try {
+    // Fetch all bookings from Supabase
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching all bookings:", error);
+      return [];
+    }
+    
+    return data as SupabaseBooking[];
+  } catch (error) {
+    console.error("Error in getAllBookings:", error);
+    return [];
+  }
 } 
