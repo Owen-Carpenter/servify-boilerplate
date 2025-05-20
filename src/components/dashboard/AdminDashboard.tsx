@@ -16,6 +16,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Footer } from "@/components/ui/footer";
 import { getAllBookings, SupabaseBooking } from "@/lib/supabase-bookings";
+import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
+import { type Appointment } from "@/lib/appointments";
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
@@ -29,6 +31,7 @@ export default function AdminDashboard() {
     completed: 0,
     cancelled: 0
   });
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   // Group bookings by status and date
   const today = new Date();
@@ -68,6 +71,25 @@ export default function AdminDashboard() {
         });
         
         setBookingCounts(counts);
+        
+        // Convert bookings to appointments format for the calendar
+        const appointmentsData: Appointment[] = allBookings.map(booking => ({
+          id: booking.id,
+          serviceId: booking.service_id,
+          serviceName: booking.service_name,
+          date: new Date(booking.appointment_date),
+          time: booking.appointment_time,
+          price: booking.amount_paid,
+          status: booking.status,
+          userId: booking.user_id,
+          providerName: "Service Provider",
+          location: "Service Location",
+          duration: "60 min",
+          bookingDate: new Date(booking.created_at),
+          category: "service"
+        }));
+        
+        setAppointments(appointmentsData);
       } catch (error) {
         console.error("Error loading admin dashboard data:", error);
         toast({
@@ -120,6 +142,11 @@ export default function AdminDashboard() {
         variant: "destructive",
       });
     }
+  };
+
+  // Function to handle appointment selection from calendar
+  const handleSelectAppointment = (appointment: Appointment) => {
+    router.push(`/admin/bookings/${appointment.id}`);
   };
 
   if (isLoading) {
@@ -543,18 +570,10 @@ export default function AdminDashboard() {
 
           {/* Appointment Calendar at the bottom */}
           <div className="mt-8">
-            <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
-              <CardHeader className="bg-primary/5 border-b">
-                <CardTitle>Appointment Calendar</CardTitle>
-                <CardDescription>All scheduled appointments</CardDescription>
-              </CardHeader>
-              <CardContent className="p-4">
-                {/* Calendar component would go here */}
-                <div className="h-96 bg-gray-50 rounded-md flex items-center justify-center">
-                  <p className="text-muted-foreground">Calendar view coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
+            <AppointmentCalendar 
+              appointments={appointments} 
+              onSelectEvent={handleSelectAppointment}
+            />
           </div>
         </div>
       </div>
