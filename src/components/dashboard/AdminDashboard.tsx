@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { 
   Loader2, Calendar, Clock, BadgeCheck, 
-  AlertTriangle, X, User as UserIcon 
+  AlertTriangle, X, User as UserIcon,
+  Search, ChevronLeft, ChevronRight, Mail, Phone
 } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +19,17 @@ import { Footer } from "@/components/ui/footer";
 import { getAllBookings, SupabaseBooking } from "@/lib/supabase-bookings";
 import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
 import { type Appointment } from "@/lib/appointments";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  created_at: string;
+}
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
@@ -32,6 +44,13 @@ export default function AdminDashboard() {
     cancelled: 0
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [customers, setCustomers] = useState<UserData[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customersError, setCustomersError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showSearch, setShowSearch] = useState(false);
 
   // Group bookings by status and date
   const today = new Date();
@@ -147,6 +166,57 @@ export default function AdminDashboard() {
   // Function to handle appointment selection from calendar
   const handleSelectAppointment = (appointment: Appointment) => {
     router.push(`/admin/bookings/${appointment.id}`);
+  };
+
+  // Function to fetch users/customers
+  const fetchCustomers = async (page: number = 1, search: string = '') => {
+    try {
+      setCustomersLoading(true);
+      setCustomersError(null);
+      
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', '10');
+      
+      if (search) {
+        params.append('search', search);
+      }
+      
+      const response = await fetch(`/api/users?${params.toString()}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setCustomers(data.users);
+        setTotalPages(data.pagination.totalPages);
+        setCurrentPage(data.pagination.page);
+      } else {
+        setCustomersError(data.message || 'Error loading customers');
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      setCustomersError('Failed to load customer data. Please try again.');
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+  
+  // Load customers when tab changes to customers
+  useEffect(() => {
+    if (activeTab === 'customers' && !customersLoading && customers.length === 0) {
+      fetchCustomers();
+    }
+  }, [activeTab]);
+  
+  // Handle search form submission
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchCustomers(1, searchQuery);
+  };
+  
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    fetchCustomers(page, searchQuery);
   };
 
   if (isLoading) {
@@ -444,13 +514,197 @@ export default function AdminDashboard() {
               <TabsContent value="customers" className="space-y-6">
                 <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                   <CardHeader className="bg-primary/5 border-b">
-                    <CardTitle>Customer Management</CardTitle>
-                    <CardDescription>Coming soon</CardDescription>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle>Customer Management</CardTitle>
+                        <CardDescription>View and manage customer accounts</CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {showSearch ? (
+                          <form onSubmit={handleSearch} className="flex items-center gap-2">
+                            <Input
+                              placeholder="Search by name or email"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="w-full max-w-xs"
+                            />
+                            <Button type="submit" size="sm" className="shrink-0">
+                              <Search className="h-4 w-4 mr-2" />
+                              Search
+                            </Button>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setShowSearch(false);
+                                setSearchQuery('');
+                                if (searchQuery) fetchCustomers(1, '');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </form>
+                        ) : (
+                          <Button onClick={() => setShowSearch(true)} variant="outline" size="sm">
+                            <Search className="h-4 w-4 mr-2" />
+                            Search
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </CardHeader>
-                  <CardContent className="p-8 text-center">
-                    <UserIcon className="h-12 w-12 text-muted-foreground mb-4 mx-auto" />
-                    <h3 className="text-lg font-medium mb-2">Customer Management</h3>
-                    <p className="text-muted-foreground mb-4">This feature is coming soon. You&apos;ll be able to manage customer accounts.</p>
+                  
+                  <CardContent className="p-0">
+                    {customersLoading ? (
+                      <div className="space-y-4 p-6">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="flex items-center space-x-4">
+                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-[250px]" />
+                              <Skeleton className="h-4 w-[200px]" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : customersError ? (
+                      <div className="flex flex-col items-center justify-center p-8 text-center">
+                        <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+                        <h3 className="text-lg font-medium">Error Loading Customers</h3>
+                        <p className="text-muted-foreground mt-2 mb-4">{customersError}</p>
+                        <Button onClick={() => fetchCustomers()}>Try Again</Button>
+                      </div>
+                    ) : customers.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center p-8 text-center">
+                        <UserIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-medium">No Customers Found</h3>
+                        <p className="text-muted-foreground mt-2 mb-4">
+                          {searchQuery 
+                            ? "No results match your search criteria." 
+                            : "There are no customer accounts in the system yet."}
+                        </p>
+                        {searchQuery && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setSearchQuery('');
+                              fetchCustomers(1, '');
+                            }}
+                          >
+                            Clear Search
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {customers.map((customer) => (
+                          <div key={customer.id} className="p-4 flex flex-col md:flex-row md:items-center gap-4">
+                            <div className="md:mr-4 shrink-0">
+                              <Avatar className="h-14 w-14 border">
+                                <AvatarFallback className="bg-primary/10 text-primary">
+                                  {customer.name?.charAt(0) || customer.email?.charAt(0) || "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-lg truncate">{customer.name}</div>
+                              <div className="text-sm text-muted-foreground flex items-center mt-1">
+                                <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                {customer.email}
+                              </div>
+                              {customer.phone && (
+                                <div className="text-sm text-muted-foreground flex items-center mt-1">
+                                  <Phone className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  {customer.phone}
+                                </div>
+                              )}
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Member since: {new Date(customer.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row gap-2 md:items-center mt-2 md:mt-0">
+                              <Badge className={
+                                customer.role === 'admin' ? 'bg-primary/15 text-primary' : 
+                                'bg-blue-100 text-blue-800'
+                              }>
+                                {customer.role.charAt(0).toUpperCase() + customer.role.slice(1)}
+                              </Badge>
+                              <div className="flex gap-2 mt-2 sm:mt-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-white"
+                                  onClick={() => router.push(`/admin/customers/${customer.id}`)}
+                                >
+                                  View
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-white"
+                                  onClick={() => router.push(`/admin/customers/${customer.id}/bookings`)}
+                                >
+                                  Bookings
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center px-4 py-6 gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        <div className="flex items-center gap-1 mx-2">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(page => 
+                              page === 1 || 
+                              page === totalPages || 
+                              Math.abs(page - currentPage) < 2
+                            )
+                            .map((page, index, array) => (
+                              <React.Fragment key={page}>
+                                {index > 0 && array[index - 1] !== page - 1 && (
+                                  <span className="px-2">...</span>
+                                )}
+                                
+                                <Button 
+                                  variant={currentPage === page ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handlePageChange(page)}
+                                  className="h-8 w-8 p-0"
+                                  aria-label={`Page ${page}`}
+                                >
+                                  {page}
+                                </Button>
+                              </React.Fragment>
+                            ))
+                          }
+                        </div>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
