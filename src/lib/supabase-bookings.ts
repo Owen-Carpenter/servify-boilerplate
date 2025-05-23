@@ -18,6 +18,9 @@ export interface SupabaseBooking {
     status?: string;
     payment_status?: string;
   };
+  // Customer information
+  customer_name?: string;
+  customer_email?: string;
 }
 
 /**
@@ -114,15 +117,22 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
 }
 
 /**
- * Get a single booking by ID
+ * Get a single booking by ID with customer information
  * @param id The booking ID
- * @returns The booking or null if not found
+ * @returns The booking with customer details or null if not found
  */
 export async function getBookingById(id: string): Promise<SupabaseBooking | null> {
   try {
+    // Use a joined query to get booking with customer information
     const { data, error } = await supabase
       .from('bookings')
-      .select('*')
+      .select(`
+        *,
+        users:user_id (
+          name,
+          email
+        )
+      `)
       .eq('id', id)
       .single();
     
@@ -131,7 +141,16 @@ export async function getBookingById(id: string): Promise<SupabaseBooking | null
       return null;
     }
     
-    return data as SupabaseBooking;
+    // Transform the data to include customer info in the main booking object
+    const customerData = data.users || {};
+    const bookingWithCustomerInfo = {
+      ...data,
+      customer_name: customerData.name || null,
+      customer_email: customerData.email || null,
+      users: undefined // Remove the nested users object
+    };
+    
+    return bookingWithCustomerInfo as SupabaseBooking;
   } catch (error) {
     console.error("Error in getBookingById:", error);
     return null;
@@ -278,15 +297,21 @@ export async function updateBookingDateTime(
 }
 
 /**
- * Get all bookings for admin
- * @returns An array of all bookings in the system
+ * Get all bookings for admin view with customer information
+ * @returns An array of bookings with customer details
  */
 export async function getAllBookings(): Promise<SupabaseBooking[]> {
   try {
-    // Fetch all bookings from Supabase
+    // Use a joined query to get bookings with customer information
     const { data, error } = await supabase
       .from('bookings')
-      .select('*')
+      .select(`
+        *,
+        users:user_id (
+          name,
+          email
+        )
+      `)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -294,7 +319,18 @@ export async function getAllBookings(): Promise<SupabaseBooking[]> {
       return [];
     }
     
-    return data as SupabaseBooking[];
+    // Transform the data to include customer info in the main booking object
+    const bookingsWithCustomerInfo = data.map(booking => {
+      const customerData = booking.users || {};
+      return {
+        ...booking,
+        customer_name: customerData.name || null,
+        customer_email: customerData.email || null,
+        users: undefined // Remove the nested users object
+      };
+    });
+    
+    return bookingsWithCustomerInfo as SupabaseBooking[];
   } catch (error) {
     console.error("Error in getAllBookings:", error);
     return [];

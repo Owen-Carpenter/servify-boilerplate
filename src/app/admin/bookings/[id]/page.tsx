@@ -6,13 +6,18 @@ import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Clock, User } from "lucide-react";
+import { Loader2, Calendar, Clock, User, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
-import { getBookingById, SupabaseBooking } from "@/lib/supabase-bookings";
+import { SupabaseBooking, getBookingById } from "@/lib/supabase-bookings";
 import { Footer } from "@/components/ui/footer";
+import { EmailDialog } from "@/components/admin/EmailDialog";
 
 export default function AdminBookingDetailPage({ params }: { params: { id: string } }) {
+  // Unwrap the params Promise using React.use()
+  const unwrappedParams = React.use(params as unknown as Promise<{ id: string }>);
+  const bookingId = unwrappedParams.id;
+  
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [booking, setBooking] = useState<SupabaseBooking | null>(null);
@@ -46,8 +51,8 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
           return;
         }
 
-        // Load booking details
-        const bookingData = await getBookingById(params.id);
+        // Load booking details with customer data (using the improved getBookingById)
+        const bookingData = await getBookingById(bookingId);
         if (!bookingData) {
           toast({
             variant: "destructive",
@@ -72,11 +77,11 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
     }
     
     loadData();
-  }, [session, status, router, params.id]);
+  }, [session, status, router, bookingId]);
 
   const handleCancelBooking = async () => {
     try {
-      const response = await fetch(`/api/bookings/${params.id}/cancel`, {
+      const response = await fetch(`/api/bookings/${bookingId}/cancel`, {
         method: 'POST',
       });
       
@@ -186,7 +191,16 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
                     <h3 className="text-sm font-medium text-muted-foreground mb-1">Customer</h3>
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-2 text-primary" />
-                      <p>ID: {booking.user_id}</p>
+                      <p className="font-medium">{booking.customer_name || 'Unknown Customer'}</p>
+                    </div>
+                    {booking.customer_email && (
+                      <div className="flex items-center mt-1">
+                        <Mail className="h-4 w-4 mr-2 text-primary" />
+                        <p>{booking.customer_email}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center mt-1 text-xs text-muted-foreground">
+                      <span>ID: {booking.user_id}</span>
                     </div>
                   </div>
                 </div>
@@ -224,6 +238,12 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
                     Cancel Booking
                   </Button>
                 </>
+              )}
+              {booking.customer_email && (
+                <EmailDialog 
+                  customerEmail={booking.customer_email}
+                  customerName={booking.customer_name || 'Customer'}
+                />
               )}
               <Button
                 variant="default"

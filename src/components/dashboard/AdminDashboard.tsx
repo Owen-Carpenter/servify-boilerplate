@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                 Overview
               </TabsTrigger>
               <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
-                Appts.
+                Bookings
               </TabsTrigger>
               <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
                 My Profile
@@ -386,8 +386,15 @@ export default function AdminDashboard() {
                               <div className="text-sm text-muted-foreground">
                                 {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                User ID: {booking.user_id.substring(0, 8)}...
+                              <div className="flex flex-wrap gap-x-4 mt-1">
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <UserIcon className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span className="font-medium">{booking.customer_name || 'Customer'}</span>
+                                </div>
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span>{booking.customer_email || 'No email'}</span>
+                                </div>
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
@@ -408,6 +415,12 @@ export default function AdminDashboard() {
                                 >
                                   Details
                                 </Button>
+                                {booking.customer_email && (
+                                  <EmailDialog 
+                                    customerEmail={booking.customer_email}
+                                    customerName={booking.customer_name || 'Customer'}
+                                  />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -455,8 +468,15 @@ export default function AdminDashboard() {
                               <div className="text-sm text-muted-foreground">
                                 {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                User ID: {booking.user_id.substring(0, 8)}...
+                              <div className="flex flex-wrap gap-x-4 mt-1">
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <UserIcon className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span className="font-medium">{booking.customer_name || 'Customer'}</span>
+                                </div>
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span>{booking.customer_email || 'No email'}</span>
+                                </div>
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
@@ -477,6 +497,12 @@ export default function AdminDashboard() {
                                 >
                                   Details
                                 </Button>
+                                {booking.customer_email && (
+                                  <EmailDialog 
+                                    customerEmail={booking.customer_email}
+                                    customerName={booking.customer_name || 'Customer'}
+                                  />
+                                )}
                                 {booking.status === 'confirmed' && (
                                   <>
                                     <Button
@@ -797,17 +823,30 @@ export default function AdminDashboard() {
                               <div className="text-sm text-muted-foreground">
                                 {format(new Date(booking.appointment_date), 'MMM d, yyyy')} • {booking.appointment_time}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                User ID: {booking.user_id.substring(0, 8)}...
+                              <div className="flex flex-wrap gap-x-4 mt-1">
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <UserIcon className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span className="font-medium">{booking.customer_name || 'Customer'}</span>
+                                </div>
+                                <div className="text-sm text-muted-foreground flex items-center">
+                                  <Mail className="h-3.5 w-3.5 mr-1 text-muted-foreground/70" />
+                                  <span>{booking.customer_email || 'No email'}</span>
+                                </div>
                               </div>
                             </div>
-                            <div className="mt-2 sm:mt-0 sm:ml-2 self-start sm:self-center">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 sm:mt-0">
                               <Badge className={
                                 booking.status === 'completed' ? 'bg-green-100 text-green-800' :
                                 'bg-red-100 text-red-800'
                               }>
                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                               </Badge>
+                              {booking.customer_email && (
+                                <EmailDialog 
+                                  customerEmail={booking.customer_email}
+                                  customerName={booking.customer_name || 'Customer'}
+                                />
+                              )}
                             </div>
                           </div>
                         ))}
