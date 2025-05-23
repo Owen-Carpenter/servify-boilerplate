@@ -35,6 +35,7 @@ export async function GET(request: Request) {
     const limit = parseInt(url.searchParams.get('limit') || '10');
     const search = url.searchParams.get('search') || '';
     const role = url.searchParams.get('role') || '';
+    const excludeAdmins = url.searchParams.get('excludeAdmins') === 'true';
     
     // Calculate offset for pagination
     const offset = (page - 1) * limit;
@@ -52,6 +53,9 @@ export async function GET(request: Request) {
     
     if (role) {
       query = query.eq('role', role);
+    } else if (excludeAdmins) {
+      // If no specific role is requested and excludeAdmins is true, filter out admin users
+      query = query.neq('role', 'admin');
     }
     
     // Apply pagination

@@ -83,3 +83,18 @@ If emails are not being sent:
 3. Verify your domain is properly set up in the Resend dashboard
 4. Check the server logs for any errors
 5. Ensure you're only calling email functions from server-side code or API routes
+
+## Email Functionality
+
+The admin dashboard includes email functionality using the Resend API. To enable this feature:
+
+1. Sign up for a free account at [Resend](https://resend.com)
+2. Get your API key from the Resend dashboard
+3. Add the following to your `.env.local` file:
+
+```
+RESEND_API_KEY=your_resend_api_key_here
+EMAIL_FROM=your_verified_sender_email@yourdomain.com
+```
+
+Note: During development, you can use the default `onboarding@resend.dev` sender, but for production, you'll need to set up domain verification in the Resend dashboard.

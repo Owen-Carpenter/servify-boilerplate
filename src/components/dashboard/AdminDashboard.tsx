@@ -21,6 +21,7 @@ import { AppointmentCalendar } from "@/components/appointment/AppointmentCalenda
 import { type Appointment } from "@/lib/appointments";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmailDialog } from "@/components/admin/EmailDialog";
 
 interface UserData {
   id: string;
@@ -177,6 +178,7 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '10');
+      params.append('excludeAdmins', 'true');
       
       if (search) {
         params.append('search', search);
@@ -626,11 +628,8 @@ export default function AdminDashboard() {
                             </div>
                             
                             <div className="flex flex-col sm:flex-row gap-2 md:items-center mt-2 md:mt-0">
-                              <Badge className={
-                                customer.role === 'admin' ? 'bg-primary/15 text-primary' : 
-                                'bg-blue-100 text-blue-800'
-                              }>
-                                {customer.role.charAt(0).toUpperCase() + customer.role.slice(1)}
+                              <Badge className="bg-blue-100 text-blue-800">
+                                Customer
                               </Badge>
                               <div className="flex gap-2 mt-2 sm:mt-0">
                                 <Button
@@ -649,6 +648,10 @@ export default function AdminDashboard() {
                                 >
                                   Bookings
                                 </Button>
+                                <EmailDialog 
+                                  customerEmail={customer.email}
+                                  customerName={customer.name || "Customer"}
+                                />
                               </div>
                             </div>
                           </div>
