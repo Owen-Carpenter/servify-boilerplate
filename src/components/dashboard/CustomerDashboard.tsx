@@ -5,8 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
-import { Loader2, Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { Loader2, Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
@@ -16,6 +16,7 @@ import { AppointmentCalendar } from "@/components/appointment/AppointmentCalenda
 import { PendingAppointments } from "@/components/dashboard/PendingAppointments";
 import { Footer } from "@/components/ui/footer";
 import { type Appointment } from "@/lib/appointments";
+import { getUserProfile, type UserProfile } from "@/lib/auth";
 
 interface CustomerDashboardProps {
   userId?: string;
@@ -26,7 +27,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState<SupabaseBooking[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("overview");
   const [bookingCounts, setBookingCounts] = useState({
     pending: 0,
@@ -49,6 +52,18 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     (booking.status === 'confirmed' && new Date(booking.appointment_date) < today)
   );
 
+  // Function to load user profile data
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const profile = await getUserProfile(userId);
+      if (profile) {
+        setUserProfile(profile);
+      }
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -61,6 +76,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
           console.error("No authenticated user ID available");
           return;
         }
+        
+        // Fetch user profile data from Supabase
+        await loadUserProfile(authenticatedUserId);
         
         // Fetch user bookings
         const userBookings = await getUserBookings(authenticatedUserId);
@@ -102,6 +120,16 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     
     loadData();
   }, [userId, session]);
+
+  // Add this effect to refresh user profile when component receives focus 
+  // (such as when navigating back from profile edit)
+  useEffect(() => {
+    // Check if we have the user ID and if page is currently active
+    if (pathname === '/' && session?.user?.id) {
+      // Refresh user profile data
+      loadUserProfile(session.user.id);
+    }
+  }, [pathname, session]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -192,7 +220,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
           {/* Welcome Section with User Summary */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 z-10 relative">
             <div>
-              <h1 className="text-3xl font-bold text-white">Welcome back, {session?.user?.name || 'User'}</h1>
+              <h1 className="text-3xl font-bold text-white">Welcome back, {userProfile?.name || session?.user?.name || 'User'}</h1>
               <p className="text-white/80 mt-1">
                 You have {upcomingBookings.length} upcoming {upcomingBookings.length === 1 ? 'booking' : 'bookings'}
               </p>
@@ -240,12 +268,12 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                       <Avatar className="h-16 w-16">
                         <AvatarImage src={session?.user?.image || ""} />
                         <AvatarFallback className="text-xl bg-primary text-white">
-                          {session?.user?.name?.charAt(0) || "U"}
+                          {(userProfile?.name || session?.user?.name || "U").charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle>{session?.user?.name || "User"}</CardTitle>
-                        <CardDescription>{session?.user?.email || ""}</CardDescription>
+                        <CardTitle>{userProfile?.name || session?.user?.name || "User"}</CardTitle>
+                        <CardDescription>{userProfile?.email || session?.user?.email || ""}</CardDescription>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
@@ -253,6 +281,12 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                         <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span>Member</span>
                       </div>
+                      {userProfile?.phone && (
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{userProfile.phone}</span>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter className="flex justify-center p-4 bg-secondary/10">
                       <Button 
@@ -462,20 +496,21 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                       <Avatar className="h-24 w-24">
                         <AvatarImage src={session?.user?.image || ""} />
                         <AvatarFallback className="text-2xl bg-primary text-white">
-                          {session?.user?.name?.charAt(0) || "U"}
+                          {(userProfile?.name || session?.user?.name || "U").charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="space-y-2">
-                        <h3 className="text-xl font-semibold">{session?.user?.name || "User"}</h3>
-                        <p className="text-muted-foreground">{session?.user?.email || ""}</p>
+                        <h3 className="text-xl font-semibold">{userProfile?.name || session?.user?.name || "User"}</h3>
+                        <p className="text-muted-foreground">{userProfile?.email || session?.user?.email || ""}</p>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Account</h3>
-                        <p>Email: {session?.user?.email || "Not provided"}</p>
+                        <p>Email: {userProfile?.email || session?.user?.email || "Not provided"}</p>
+                        {userProfile?.phone && <p>Phone: {userProfile.phone}</p>}
                       </div>
                     </div>
 
