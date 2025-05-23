@@ -3,10 +3,10 @@
 import React from 'react';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import CustomerDashboard from "@/components/dashboard/CustomerDashboard";
+import { PageLoader } from "@/components/ui/page-loader";
 
 export default function CustomerDashboardPage() {
   const { data: session, status } = useSession();
@@ -14,15 +14,10 @@ export default function CustomerDashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
-            <p className="text-muted-foreground mt-2">Please wait while we fetch your data</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Preparing Your Dashboard" 
+        subMessage="Please wait while we authenticate your session..." 
+      />
     );
   }
 

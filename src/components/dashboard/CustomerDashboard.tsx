@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, usePathname } from "next/navigation";
-import { Loader2, Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone } from "lucide-react";
+import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
@@ -17,6 +17,7 @@ import { PendingAppointments } from "@/components/dashboard/PendingAppointments"
 import { Footer } from "@/components/ui/footer";
 import { type Appointment } from "@/lib/appointments";
 import { getUserProfile, type UserProfile } from "@/lib/auth";
+import { PageLoader } from "@/components/ui/page-loader";
 
 interface CustomerDashboardProps {
   userId?: string;
@@ -194,15 +195,10 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
-            <p className="text-muted-foreground mt-2">Please wait while we fetch your data</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Your Dashboard" 
+        subMessage="Fetching your appointments and profile information..." 
+      />
     );
   }
 
