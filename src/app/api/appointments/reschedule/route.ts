@@ -41,8 +41,22 @@ export async function POST(request: Request) {
       );
     }
     
-    // Verify the user owns this appointment if userId is provided
-    if (userId && booking.user_id !== userId) {
+    // Check if user is an admin
+    let isAdmin = false;
+    if (userId) {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (!userError && userData) {
+        isAdmin = userData.role === 'admin';
+      }
+    }
+    
+    // Verify the user owns this appointment or is an admin
+    if (userId && booking.user_id !== userId && !isAdmin) {
       return NextResponse.json(
         { 
           success: false, 
