@@ -40,7 +40,16 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
         }
 
         // Check if user is admin
-        if (session.user.role !== 'admin') {
+        type ExtendedUser = {
+          role?: string;
+          isAdmin?: boolean;
+        };
+
+        const isAdmin = 
+          session.user.role === 'admin' || 
+          (session.user as ExtendedUser).isAdmin === true;
+
+        if (!isAdmin) {
           setIsLoading(false);
           toast({
             variant: "destructive",
