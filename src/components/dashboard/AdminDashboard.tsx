@@ -421,6 +421,26 @@ export default function AdminDashboard() {
                                     customerName={booking.customer_name || 'Customer'}
                                   />
                                 )}
+                                {booking.status === 'confirmed' && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
+                                      onClick={() => router.push(`/admin/bookings/${booking.id}/reschedule`)}
+                                    >
+                                      Reschedule
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                      onClick={() => handleCancelBooking(booking.id)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
