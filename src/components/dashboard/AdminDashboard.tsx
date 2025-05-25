@@ -272,7 +272,7 @@ export default function AdminDashboard() {
                 Bookings
               </TabsTrigger>
               <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
-                My Profile
+                Profile
               </TabsTrigger>
               <TabsTrigger value="customers" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
                 Customers
