@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface PageLoaderProps {
   message?: string;
@@ -22,8 +22,18 @@ export function PageLoader({
         </div>
         
         <div className="relative flex flex-col items-center justify-center space-y-8">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+            
+            <div className="absolute inset-2 rounded-full bg-primary/20 animate-pulse" />
+            
+            <div className="relative z-10 animate-bounce">
+              <Search className="h-8 w-8 text-primary" />
+            </div>
+            
+            <div className="absolute inset-0 rounded-full overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-[sweep_2s_ease-in-out_infinite]" />
+            </div>
           </div>
           
           <div className="text-center">
@@ -32,10 +42,23 @@ export function PageLoader({
           </div>
           
           <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full w-1/3 animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+            <div className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full w-1/3 animate-[wave_2s_ease-in-out_infinite]"></div>
           </div>
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes sweep {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          50% { opacity: 1; }
+          100% { transform: translateY(96px) rotate(180deg); opacity: 0; }
+        }
+        
+        @keyframes wave {
+          0%, 100% { transform: translateX(-100%); }
+          50% { transform: translateX(300%); }
+        }
+      `}</style>
     </div>
   );
 } 

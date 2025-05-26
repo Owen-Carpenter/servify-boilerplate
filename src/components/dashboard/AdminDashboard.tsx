@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { 
-  Loader2, Calendar, Clock, BadgeCheck, 
+  Calendar, Clock, BadgeCheck, 
   AlertTriangle, X, User as UserIcon,
   Search, ChevronLeft, ChevronRight, Mail, Phone
 } from "lucide-react";
@@ -22,6 +22,7 @@ import { type Appointment } from "@/lib/appointments";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDialog } from "@/components/admin/EmailDialog";
+import { PageLoader } from "@/components/ui/page-loader";
 
 interface UserData {
   id: string;
@@ -223,15 +224,10 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading admin dashboard...</h2>
-            <p className="text-muted-foreground mt-2">Please wait while we fetch the data</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Admin Dashboard" 
+        subMessage="Please wait while we fetch the latest data..." 
+      />
     );
   }
 

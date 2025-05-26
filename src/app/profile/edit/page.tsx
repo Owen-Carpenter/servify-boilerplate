@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Footer } from "@/components/ui/footer";
+import { PageLoader } from "@/components/ui/page-loader";
 
 // Extended User interface to include additional profile fields
 interface ExtendedUser {
@@ -72,9 +73,10 @@ export default function ProfileEditPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLoader 
+        message="Loading Profile Editor" 
+        subMessage="Please wait while we prepare your profile settings..." 
+      />
     );
   }
 

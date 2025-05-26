@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Footer } from "@/components/ui/footer";
+import { PageLoader } from "@/components/ui/page-loader";
 
 interface UserProfileData {
   name: string | null;
@@ -162,9 +163,10 @@ export default function ProfilePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <PageLoader 
+        message="Loading Profile" 
+        subMessage="Please wait while we fetch your profile information..." 
+      />
     );
   }
 
