@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageLoader } from "@/components/ui/page-loader";
 
 // All possible time slots
 const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
@@ -262,14 +263,10 @@ export default function AdminRescheduleAppointmentPage() {
   
   if (isLoading) {
     return (
-      <div className="gradient-bg min-h-screen flex items-center justify-center p-8">
-        <Card className="max-w-md mx-auto bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-          <CardContent className="flex flex-col items-center justify-center p-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-6" />
-            <p className="text-lg font-medium">Loading appointment details...</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Appointment Details" 
+        subMessage="Please wait while we prepare the reschedule options..." 
+      />
     );
   }
 

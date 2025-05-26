@@ -6,13 +6,14 @@ import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Clock, BadgeCheck, X, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, BadgeCheck, X, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/auth";
 import { Footer } from "@/components/ui/footer";
 import { SupabaseBooking } from "@/lib/supabase-bookings";
 import { EmailDialog } from "@/components/admin/EmailDialog";
+import { PageLoader } from "@/components/ui/page-loader";
 
 interface UserProfile {
   id: string;
@@ -165,15 +166,10 @@ export default function CustomerBookingsPage({ params }: { params: { id: string 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading customer bookings...</h2>
-            <p className="text-muted-foreground mt-2">Please wait</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Customer Bookings" 
+        subMessage="Please wait while we fetch the booking history..." 
+      />
     );
   }
 

@@ -6,11 +6,12 @@ import { getAppointments, cancelAppointment, type Appointment } from '@/lib/appo
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Clock, Home, MapPin, DollarSign, User, CalendarDays, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Calendar, Clock, MapPin, DollarSign, User, CalendarDays, ArrowLeft, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PageLoader } from "@/components/ui/page-loader";
 
 export default function AppointmentDetailsPage() {
   const { data: session, status } = useSession();
@@ -92,15 +93,10 @@ export default function AppointmentDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg pt-32 pb-20">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading appointment details...</h2>
-            <p className="text-muted-foreground mt-2">Please wait while we fetch your appointment information</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Appointment Details" 
+        subMessage="Please wait while we fetch your appointment information..." 
+      />
     );
   }
 

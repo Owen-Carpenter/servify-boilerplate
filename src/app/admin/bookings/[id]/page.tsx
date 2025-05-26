@@ -6,12 +6,13 @@ import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Clock, User, Mail } from "lucide-react";
+import { Calendar, Clock, User, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { SupabaseBooking, getBookingById } from "@/lib/supabase-bookings";
 import { Footer } from "@/components/ui/footer";
 import { EmailDialog } from "@/components/admin/EmailDialog";
+import { PageLoader } from "@/components/ui/page-loader";
 
 export default function AdminBookingDetailPage({ params }: { params: { id: string } }) {
   // Unwrap the params Promise using React.use()
@@ -119,15 +120,10 @@ export default function AdminBookingDetailPage({ params }: { params: { id: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gradient-bg">
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-xl border-0">
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <h2 className="text-xl font-semibold">Loading booking details...</h2>
-            <p className="text-muted-foreground mt-2">Please wait</p>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLoader 
+        message="Loading Booking Details" 
+        subMessage="Please wait while we fetch the booking information..." 
+      />
     );
   }
 
