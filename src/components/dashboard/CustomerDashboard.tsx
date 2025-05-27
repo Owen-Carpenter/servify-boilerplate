@@ -19,6 +19,35 @@ import { getUserProfile, type UserProfile } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, formatDateForDisplay, getTodayForDB, isSameDay } from "@/lib/date-utils";
 
+// Helper function to parse time strings for sorting (e.g., "9:00 AM" -> 540 minutes)
+const parseTimeToMinutes = (timeStr: string): number => {
+  const [hourMin, period] = timeStr.split(' ');
+  const [hour, minute] = hourMin.split(':').map(Number);
+  let hours = hour;
+  if (period === 'PM' && hour < 12) hours += 12;
+  if (period === 'AM' && hour === 12) hours = 0;
+  return hours * 60 + minute;
+};
+
+// Helper function to sort bookings by date and time (ascending)
+const sortBookingsByDateTime = (bookings: SupabaseBooking[]): SupabaseBooking[] => {
+  return [...bookings].sort((a, b) => {
+    // First sort by date
+    const dateA = parseDateFromDB(a.appointment_date);
+    const dateB = parseDateFromDB(b.appointment_date);
+    const dateDiff = dateA.getTime() - dateB.getTime();
+    
+    if (dateDiff !== 0) {
+      return dateDiff;
+    }
+    
+    // If dates are the same, sort by time
+    const timeA = parseTimeToMinutes(a.appointment_time);
+    const timeB = parseTimeToMinutes(b.appointment_time);
+    return timeA - timeB;
+  });
+};
+
 interface CustomerDashboardProps {
   userId?: string;
 }
@@ -356,7 +385,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                   <CardContent className="p-0">
                     {bookings.length > 0 ? (
                       <div className="divide-y">
-                        {bookings.slice(0, 5).map((booking) => (
+                        {sortBookingsByDateTime(bookings).slice(0, 5).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -424,7 +453,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                   <CardContent className="p-0">
                     {bookings.length > 0 ? (
                       <div className="divide-y">
-                        {bookings.map((booking) => (
+                        {sortBookingsByDateTime(bookings).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -549,7 +578,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                   <CardContent className="p-0">
                     {pastBookings.length > 0 ? (
                       <div className="divide-y">
-                        {pastBookings.map((booking) => (
+                        {sortBookingsByDateTime(pastBookings).map((booking) => (
                           <div key={booking.id} className="p-4 flex items-center">
                             <div className="mr-4">
                               {booking.status === 'completed' ? (
