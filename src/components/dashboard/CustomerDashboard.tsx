@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, usePathname } from "next/navigation";
 import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone } from "lucide-react";
-import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
@@ -18,6 +17,7 @@ import { Footer } from "@/components/ui/footer";
 import { type Appointment } from "@/lib/appointments";
 import { getUserProfile, type UserProfile } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/page-loader";
+import { parseDateFromDB, formatDateForDisplay, getTodayForDB, isSameDay } from "@/lib/date-utils";
 
 interface CustomerDashboardProps {
   userId?: string;
@@ -41,16 +41,17 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
   // Group bookings by status and date
   const today = new Date();
+  const todayForDB = getTodayForDB();
   
   const upcomingBookings = bookings.filter(booking => 
     (booking.status === 'confirmed' || booking.status === 'pending') && 
-    new Date(booking.appointment_date) >= today
+    (parseDateFromDB(booking.appointment_date) >= today || isSameDay(booking.appointment_date, todayForDB))
   );
   
   const pastBookings = bookings.filter(booking => 
     booking.status === 'completed' || 
     booking.status === 'cancelled' || 
-    (booking.status === 'confirmed' && new Date(booking.appointment_date) < today)
+    (booking.status === 'confirmed' && parseDateFromDB(booking.appointment_date) < today && !isSameDay(booking.appointment_date, todayForDB))
   );
 
   // Function to load user profile data
@@ -94,7 +95,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
           id: booking.id,
           serviceId: booking.service_id,
           serviceName: booking.service_name,
-          date: new Date(booking.appointment_date),
+          date: parseDateFromDB(booking.appointment_date),
           time: booking.appointment_time,
           price: booking.amount_paid,
           status: booking.status,
@@ -365,7 +366,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                             <div className="flex-1">
                               <div className="font-medium text-lg">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
+                                {formatDateForDisplay(booking.appointment_date, 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
@@ -433,7 +434,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                             <div className="flex-1">
                               <div className="font-medium text-lg">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
+                                {formatDateForDisplay(booking.appointment_date, 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
@@ -564,7 +565,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                             <div className="flex-1">
                               <div className="font-medium">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'MMM d, yyyy')} • {booking.appointment_time}
+                                {formatDateForDisplay(booking.appointment_date, 'MMM d, yyyy')} • {booking.appointment_time}
                               </div>
                             </div>
                             <Badge className={
