@@ -19,6 +19,17 @@ import { getUserProfile, type UserProfile } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, formatDateForDisplay, getTodayForDB, isSameDay } from "@/lib/date-utils";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Helper function to parse time strings for sorting (e.g., "9:00 AM" -> 540 minutes)
 const parseTimeToMinutes = (timeStr: string): number => {
@@ -318,9 +329,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
             {/* Tab Contents */}
             <div className="mt-8">
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Display pending appointments that need payment at the top */}
-                  <div className="md:col-span-3">
+                  <div className="lg:col-span-3">
                     <PendingAppointments 
                       appointments={appointments} 
                       onAppointmentDeleted={handleAppointmentDeleted} 
@@ -329,27 +340,29 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
                   {/* User Profile Summary Card */}
                   <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
-                    <CardHeader className="bg-primary/5 border-b flex flex-row items-center gap-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarImage src={session?.user?.image || ""} />
-                        <AvatarFallback className="text-xl bg-primary text-white">
-                          {(userProfile?.name || session?.user?.name || "U").charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle>{userProfile?.name || session?.user?.name || "User"}</CardTitle>
-                        <CardDescription>{userProfile?.email || session?.user?.email || ""}</CardDescription>
+                    <CardHeader className="bg-primary/5 border-b">
+                      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                        <Avatar className="h-16 w-16 shrink-0">
+                          <AvatarImage src={session?.user?.image || ""} />
+                          <AvatarFallback className="text-xl bg-primary text-white">
+                            {(userProfile?.name || session?.user?.name || "U").charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center sm:text-left min-w-0 flex-1">
+                          <CardTitle className="truncate">{userProfile?.name || session?.user?.name || "User"}</CardTitle>
+                          <CardDescription className="truncate">{userProfile?.email || session?.user?.email || ""}</CardDescription>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center sm:justify-start">
                         <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span>Member</span>
                       </div>
                       {userProfile?.phone && (
-                        <div className="flex items-center">
+                        <div className="flex items-center justify-center sm:justify-start">
                           <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{userProfile.phone}</span>
+                          <span className="truncate">{userProfile.phone}</span>
                         </div>
                       )}
                     </CardContent>
@@ -366,50 +379,50 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                   </Card>
 
                   {/* Appointment Stats */}
-                  <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0 col-span-2">
+                  <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0 lg:col-span-2">
                     <CardHeader className="bg-primary/5 border-b">
                       <CardTitle>Booking Statistics</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 rounded-lg bg-secondary/10">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-muted-foreground text-sm">Pending</p>
-                            <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                              <Clock className="h-4 w-4 text-yellow-600" />
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div className="p-3 sm:p-4 rounded-lg bg-secondary/10">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
+                            <p className="text-muted-foreground text-xs sm:text-sm">Pending</p>
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-yellow-100 flex items-center justify-center self-end sm:self-auto">
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600" />
                             </div>
                           </div>
-                          <p className="text-2xl font-bold">{bookingCounts.pending}</p>
+                          <p className="text-xl sm:text-2xl font-bold">{bookingCounts.pending}</p>
                         </div>
                         
-                        <div className="p-4 rounded-lg bg-secondary/10">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-muted-foreground text-sm">Confirmed</p>
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Calendar className="h-4 w-4 text-primary" />
+                        <div className="p-3 sm:p-4 rounded-lg bg-secondary/10">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
+                            <p className="text-muted-foreground text-xs sm:text-sm">Confirmed</p>
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-primary/10 flex items-center justify-center self-end sm:self-auto">
+                              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                             </div>
                           </div>
-                          <p className="text-2xl font-bold">{bookingCounts.confirmed}</p>
+                          <p className="text-xl sm:text-2xl font-bold">{bookingCounts.confirmed}</p>
                         </div>
                         
-                        <div className="p-4 rounded-lg bg-secondary/10">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-muted-foreground text-sm">Completed</p>
-                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                              <BadgeCheck className="h-4 w-4 text-green-600" />
+                        <div className="p-3 sm:p-4 rounded-lg bg-secondary/10">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
+                            <p className="text-muted-foreground text-xs sm:text-sm">Completed</p>
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-green-100 flex items-center justify-center self-end sm:self-auto">
+                              <BadgeCheck className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                             </div>
                           </div>
-                          <p className="text-2xl font-bold">{bookingCounts.completed}</p>
+                          <p className="text-xl sm:text-2xl font-bold">{bookingCounts.completed}</p>
                         </div>
                         
-                        <div className="p-4 rounded-lg bg-secondary/10">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-muted-foreground text-sm">Cancelled</p>
-                            <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                              <X className="h-4 w-4 text-red-600" />
+                        <div className="p-3 sm:p-4 rounded-lg bg-secondary/10">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
+                            <p className="text-muted-foreground text-xs sm:text-sm">Cancelled</p>
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-red-100 flex items-center justify-center self-end sm:self-auto">
+                              <X className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
                             </div>
                           </div>
-                          <p className="text-2xl font-bold">{bookingCounts.cancelled}</p>
+                          <p className="text-xl sm:text-2xl font-bold">{bookingCounts.cancelled}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -426,44 +439,64 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                       <div className="divide-y">
                         {sortBookingsByDateTime(activeBookings).slice(0, 5).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                            <div className="sm:mr-4">
+                            <div className="sm:mr-4 self-center sm:self-auto">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                                 <Calendar className="h-6 w-6 text-primary" />
                               </div>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 text-center sm:text-left">
                               <div className="font-medium text-lg">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
                                 {formatDateForDisplay(booking.appointment_date, 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
-                              <Badge className={
+                            <div className="flex flex-col gap-3 sm:flex-row sm:gap-2 sm:items-center">
+                              <Badge className={`self-center sm:self-auto ${
                                 booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                 booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                                 'bg-red-100 text-red-800'
-                              }>
+                              }`}>
                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                               </Badge>
-                              <div className="flex gap-2 mt-2 sm:mt-0">
+                              <div className="flex gap-2 justify-center sm:justify-start">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="bg-white"
+                                  className="bg-white flex-1 sm:flex-none"
                                   onClick={() => router.push(`/appointments/${booking.id}`)}
                                 >
                                   Details
                                 </Button>
                                 {booking.status === 'confirmed' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                                    onClick={() => handleCancelBooking(booking.id)}
-                                  >
-                                    Cancel
-                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive flex-1 sm:flex-none"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to cancel this booking for {booking.service_name}? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>No, Keep Booking</AlertDialogCancel>
+                                        <AlertDialogAction 
+                                          onClick={() => handleCancelBooking(booking.id)}
+                                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                        >
+                                          Yes, Cancel Booking
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 )}
                               </div>
                             </div>
@@ -634,14 +667,34 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                                   Details
                                 </Button>
                                 {booking.status === 'confirmed' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                                    onClick={() => handleCancelBooking(booking.id)}
-                                  >
-                                    Cancel
-                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive flex-1 sm:flex-none"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to cancel this booking for {booking.service_name}? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>No, Keep Booking</AlertDialogCancel>
+                                        <AlertDialogAction 
+                                          onClick={() => handleCancelBooking(booking.id)}
+                                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                        >
+                                          Yes, Cancel Booking
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 )}
                               </div>
                             </div>

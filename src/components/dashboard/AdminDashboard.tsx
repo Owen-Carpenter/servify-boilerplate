@@ -24,6 +24,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDialog } from "@/components/admin/EmailDialog";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, isSameDay as isSameDayUtil } from "@/lib/date-utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface UserData {
   id: string;
@@ -495,14 +506,34 @@ export default function AdminDashboard() {
                                     >
                                       Reschedule
                                     </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                                      onClick={() => handleCancelBooking(booking.id)}
-                                    >
-                                      Cancel
-                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to cancel this booking for {booking.customer_name || 'Customer'}? This action cannot be undone and the customer will be notified.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>No, Keep Booking</AlertDialogCancel>
+                                          <AlertDialogAction 
+                                            onClick={() => handleCancelBooking(booking.id)}
+                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                          >
+                                            Yes, Cancel Booking
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </>
                                 )}
                               </div>
@@ -710,14 +741,34 @@ export default function AdminDashboard() {
                                     >
                                       Reschedule
                                     </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                                      onClick={() => handleCancelBooking(booking.id)}
-                                    >
-                                      Cancel
-                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to cancel this booking for {booking.customer_name || 'Customer'}? This action cannot be undone and the customer will be notified.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>No, Keep Booking</AlertDialogCancel>
+                                          <AlertDialogAction 
+                                            onClick={() => handleCancelBooking(booking.id)}
+                                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                          >
+                                            Yes, Cancel Booking
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </>
                                 )}
                               </div>
