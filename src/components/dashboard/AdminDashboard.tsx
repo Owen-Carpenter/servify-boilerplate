@@ -11,7 +11,7 @@ import {
   AlertTriangle, X, User as UserIcon,
   Search, ChevronLeft, ChevronRight, Mail, Phone
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDialog } from "@/components/admin/EmailDialog";
 import { PageLoader } from "@/components/ui/page-loader";
+import { parseDateFromDB, isSameDay as isSameDayUtil } from "@/lib/date-utils";
 
 interface UserData {
   id: string;
@@ -53,6 +54,9 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Weekly view state
+  const [currentWeek, setCurrentWeek] = useState(new Date());
 
   // Group bookings by status and date
   const today = new Date();
@@ -67,6 +71,25 @@ export default function AdminDashboard() {
     booking.status === 'cancelled' || 
     (booking.status === 'confirmed' && new Date(booking.appointment_date) < today)
   );
+
+  // Get week days for the weekly view
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Start on Monday
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Group bookings by day for the weekly view
+  const getBookingsForDay = (date: Date) => {
+    return bookings.filter(booking => {
+      // Use standardized date parsing and comparison
+      return isSameDayUtil(booking.appointment_date, date) && 
+             (booking.status === 'confirmed' || booking.status === 'pending');
+    }).sort((a, b) => {
+      // Sort by time
+      const timeA = a.appointment_time;
+      const timeB = b.appointment_time;
+      return timeA.localeCompare(timeB);
+    });
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -98,7 +121,7 @@ export default function AdminDashboard() {
           id: booking.id,
           serviceId: booking.service_id,
           serviceName: booking.service_name,
-          date: new Date(booking.appointment_date),
+          date: parseDateFromDB(booking.appointment_date), // Use standardized date parsing
           time: booking.appointment_time,
           price: booking.amount_paid,
           status: booking.status,
@@ -220,6 +243,19 @@ export default function AdminDashboard() {
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     fetchCustomers(page, searchQuery);
+  };
+
+  // Weekly navigation functions
+  const goToPreviousWeek = () => {
+    setCurrentWeek(subWeeks(currentWeek, 1));
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeek(addWeeks(currentWeek, 1));
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeek(new Date());
   };
 
   if (isLoading) {
@@ -380,7 +416,7 @@ export default function AdminDashboard() {
                             <div className="flex-1">
                               <div className="font-medium text-lg">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
+                                {format(parseDateFromDB(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
                               <div className="flex flex-wrap gap-x-4 mt-1">
                                 <div className="text-sm text-muted-foreground flex items-center">
@@ -463,6 +499,119 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="appointments" className="space-y-6">
+                {/* Weekly View */}
+                <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <CardTitle>Weekly Appointments</CardTitle>
+                        <CardDescription>
+                          Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToPreviousWeek}
+                          className="bg-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToCurrentWeek}
+                          className="bg-white"
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToNextWeek}
+                          className="bg-white"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            {weekDays.map((day) => (
+                              <th key={day.toISOString()} className="p-4 text-left font-medium">
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(day, 'EEE')}
+                                  </span>
+                                  <span className={`text-lg ${
+                                    isSameDayUtil(day, today) ? 'text-primary font-bold' : ''
+                                  }`}>
+                                    {format(day, 'd')}
+                                  </span>
+                                </div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            {weekDays.map((day) => {
+                              const dayBookings = getBookingsForDay(day);
+                              return (
+                                <td key={day.toISOString()} className="p-2 align-top border-r last:border-r-0 min-h-[200px]">
+                                  <div className="space-y-2">
+                                    {dayBookings.length === 0 ? (
+                                      <div className="text-center text-muted-foreground text-sm py-4">
+                                        No appointments
+                                      </div>
+                                    ) : (
+                                      dayBookings.map((booking) => (
+                                        <div
+                                          key={booking.id}
+                                          className="p-2 rounded-md border bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                                          onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                                        >
+                                          <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-medium text-primary">
+                                              {booking.appointment_time}
+                                            </span>
+                                            <Badge 
+                                              className={`text-xs ${
+                                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                'bg-yellow-100 text-yellow-800'
+                                              }`}
+                                            >
+                                              {booking.status}
+                                            </Badge>
+                                          </div>
+                                          <div className="text-sm font-medium truncate mb-1">
+                                            {booking.service_name}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground truncate">
+                                            {booking.customer_name || 'Customer'}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            ${booking.amount_paid}
+                                          </div>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* All Bookings Section */}
                 <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                   <CardHeader className="bg-primary/5 border-b">
@@ -482,7 +631,7 @@ export default function AdminDashboard() {
                             <div className="flex-1">
                               <div className="font-medium text-lg">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
+                                {format(parseDateFromDB(booking.appointment_date), 'EEEE, MMMM d, yyyy')} • {booking.appointment_time}
                               </div>
                               <div className="flex flex-wrap gap-x-4 mt-1">
                                 <div className="text-sm text-muted-foreground flex items-center">
@@ -837,7 +986,7 @@ export default function AdminDashboard() {
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{booking.service_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {format(new Date(booking.appointment_date), 'MMM d, yyyy')} • {booking.appointment_time}
+                                {format(parseDateFromDB(booking.appointment_date), 'MMM d, yyyy')} • {booking.appointment_time}
                               </div>
                               <div className="flex flex-wrap gap-x-4 mt-1">
                                 <div className="text-sm text-muted-foreground flex items-center">

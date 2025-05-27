@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { formatDateForDB } from "@/lib/date-utils";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -120,7 +121,7 @@ export async function POST(req: Request) {
         user_id: userId,
         service_id: bookingData.serviceId,
         service_name: bookingData.serviceName,
-        appointment_date: bookingData.date,
+        appointment_date: formatDateForDB(bookingData.date),
         appointment_time: bookingData.time,
         status: 'pending', // Always pending until webhook confirms payment
         payment_status: 'pending', // Always pending until webhook confirms payment

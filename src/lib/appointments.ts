@@ -1,5 +1,6 @@
 import { toast } from "@/components/ui/use-toast";
 import { getUserBookings, SupabaseBooking } from "./supabase-bookings";
+import { parseDateFromDB, formatDateForDB } from "./date-utils";
 
 // Appointment statuses
 export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
@@ -22,27 +23,9 @@ export interface Appointment {
 
 // Convert Supabase booking to our Appointment interface
 function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment {
-  // Try to parse the appointment date, fallback to current date if it fails
-  let appointmentDate: Date;
-  try {
-    appointmentDate = new Date(booking.appointment_date);
-    if (isNaN(appointmentDate.getTime())) {
-      appointmentDate = new Date();
-    }
-  } catch {
-    appointmentDate = new Date();
-  }
-  
-  // Try to parse the booking date, fallback to current date if it fails
-  let bookingDate: Date;
-  try {
-    bookingDate = new Date(booking.created_at);
-    if (isNaN(bookingDate.getTime())) {
-      bookingDate = new Date();
-    }
-  } catch {
-    bookingDate = new Date();
-  }
+  // Use standardized date parsing
+  const appointmentDate = parseDateFromDB(booking.appointment_date);
+  const bookingDate = new Date(booking.created_at);
 
   // Check if payment is complete in Stripe even if booking status is still pending
   const stripePaymentComplete = 
@@ -182,7 +165,7 @@ export async function updateAppointmentDateTime(
       },
       body: JSON.stringify({
         appointmentId,
-        appointmentDate: newDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        appointmentDate: formatDateForDB(newDate), // Use standardized date formatting
         appointmentTime: newTime,
         userId
       }),
@@ -226,10 +209,9 @@ export async function updateAppointmentDateTime(
 /**
  * Get a single appointment by ID
  * @param appointmentId The ID of the appointment to fetch
- * @param userId Optional user ID to pass to Supabase
  * @returns The appointment or null if not found
  */
-export async function getAppointmentById(appointmentId: string, userId?: string): Promise<Appointment | null> {
+export async function getAppointmentById(appointmentId: string): Promise<Appointment | null> {
   try {
     // Fetch the booking from Supabase using our API
     const response = await fetch(`/api/bookings/${appointmentId}`);

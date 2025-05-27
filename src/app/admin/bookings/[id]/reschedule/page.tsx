@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 import { Appointment, updateAppointmentDateTime, getAppointmentById } from '@/lib/appointments';
 import { ArrowLeft, CalendarIcon, Loader2, Clock, User } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageLoader } from "@/components/ui/page-loader";
+import { formatDateForDB, isSameDay as isSameDayUtil } from '@/lib/date-utils';
 
 // All possible time slots
 const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
@@ -145,17 +146,13 @@ export default function AdminRescheduleAppointmentPage() {
   useEffect(() => {
     if (!selectedDate || !appointment) return;
     
-    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    const formattedDate = formatDateForDB(selectedDate);
     const appointmentDurationMinutes = parseInt(appointment.duration.split(' ')[0], 10);
     
     // Get bookings for the selected date, excluding the current appointment
     const dateBookings = existingBookings.filter(booking => {
-      // Format the booking date to yyyy-MM-dd for comparison
-      const bookingDate = booking.appointment_date.includes('T') 
-        ? format(parseISO(booking.appointment_date), "yyyy-MM-dd")
-        : booking.appointment_date;
-      
-      return bookingDate === formattedDate && 
+      // Use standardized date comparison
+      return isSameDayUtil(booking.appointment_date, selectedDate) && 
         booking.id !== appointment.id &&
         (booking.status === 'confirmed' || booking.status === 'pending');
     });
