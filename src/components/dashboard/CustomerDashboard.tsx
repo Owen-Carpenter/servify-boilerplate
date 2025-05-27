@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, usePathname } from "next/navigation";
-import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone } from "lucide-react";
+import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
@@ -18,6 +18,7 @@ import { type Appointment } from "@/lib/appointments";
 import { getUserProfile, type UserProfile } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, formatDateForDisplay, getTodayForDB, isSameDay } from "@/lib/date-utils";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 
 // Helper function to parse time strings for sorting (e.g., "9:00 AM" -> 540 minutes)
 const parseTimeToMinutes = (timeStr: string): number => {
@@ -67,12 +68,18 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     completed: 0,
     cancelled: 0
   });
+  
+  // Weekly view state
+  const [currentWeek, setCurrentWeek] = useState(new Date());
 
   // Group bookings by status and date
   const today = new Date();
   const todayForDB = getTodayForDB();
   
-  const upcomingBookings = bookings.filter(booking => 
+  // Filter out cancelled bookings for overview and appointments tabs
+  const activeBookings = bookings.filter(booking => booking.status !== 'cancelled');
+  
+  const upcomingBookings = activeBookings.filter(booking => 
     (booking.status === 'confirmed' || booking.status === 'pending') && 
     (parseDateFromDB(booking.appointment_date) >= today || isSameDay(booking.appointment_date, todayForDB))
   );
@@ -82,6 +89,25 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     booking.status === 'cancelled' || 
     (booking.status === 'confirmed' && parseDateFromDB(booking.appointment_date) < today && !isSameDay(booking.appointment_date, todayForDB))
   );
+
+  // Get week days for the weekly view
+  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Start on Monday
+  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // Group bookings by day for the weekly view (use activeBookings to exclude cancelled)
+  const getBookingsForDay = (date: Date) => {
+    return activeBookings.filter(booking => {
+      // Use standardized date parsing and comparison
+      return isSameDay(booking.appointment_date, date) && 
+             (booking.status === 'confirmed' || booking.status === 'pending');
+    }).sort((a, b) => {
+      // Sort by time using the same utility function
+      const timeA = parseTimeToMinutes(a.appointment_time);
+      const timeB = parseTimeToMinutes(b.appointment_time);
+      return timeA - timeB;
+    });
+  };
 
   // Function to load user profile data
   const loadUserProfile = async (userId: string) => {
@@ -221,6 +247,19 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   // Function to handle appointment selection from calendar
   const handleSelectAppointment = (appointment: Appointment) => {
     router.push(`/appointments/${appointment.id}`);
+  };
+
+  // Weekly navigation functions
+  const goToPreviousWeek = () => {
+    setCurrentWeek(subWeeks(currentWeek, 1));
+  };
+
+  const goToNextWeek = () => {
+    setCurrentWeek(addWeeks(currentWeek, 1));
+  };
+
+  const goToCurrentWeek = () => {
+    setCurrentWeek(new Date());
   };
 
   if (isLoading) {
@@ -383,9 +422,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                     <CardTitle>Your Recent Bookings</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {bookings.length > 0 ? (
+                    {activeBookings.length > 0 ? (
                       <div className="divide-y">
-                        {sortBookingsByDateTime(bookings).slice(0, 5).map((booking) => (
+                        {sortBookingsByDateTime(activeBookings).slice(0, 5).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -444,6 +483,116 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
               </TabsContent>
 
               <TabsContent value="appointments" className="space-y-6">
+                {/* Weekly View */}
+                <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <CardTitle>Weekly Appointments</CardTitle>
+                        <CardDescription>
+                          Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToPreviousWeek}
+                          className="bg-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToCurrentWeek}
+                          className="bg-white"
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={goToNextWeek}
+                          className="bg-white"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b bg-gray-50">
+                            {weekDays.map((day) => (
+                              <th key={day.toISOString()} className="p-4 text-left font-medium">
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(day, 'EEE')}
+                                  </span>
+                                  <span className={`text-lg ${
+                                    isSameDay(day, today) ? 'text-primary font-bold' : ''
+                                  }`}>
+                                    {format(day, 'd')}
+                                  </span>
+                                </div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            {weekDays.map((day) => {
+                              const dayBookings = getBookingsForDay(day);
+                              return (
+                                <td key={day.toISOString()} className="p-2 align-top border-r last:border-r-0 min-h-[200px]">
+                                  <div className="space-y-2">
+                                    {dayBookings.length === 0 ? (
+                                      <div className="text-center text-muted-foreground text-sm py-4">
+                                        No appointments
+                                      </div>
+                                    ) : (
+                                      dayBookings.map((booking) => (
+                                        <div
+                                          key={booking.id}
+                                          className="p-2 rounded-md border bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                                          onClick={() => router.push(`/appointments/${booking.id}`)}
+                                        >
+                                          <div className="flex items-center justify-between mb-1">
+                                            <span className="text-xs font-medium text-primary">
+                                              {booking.appointment_time}
+                                            </span>
+                                            <Badge 
+                                              className={`text-xs ${
+                                                booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                'bg-yellow-100 text-yellow-800'
+                                              }`}
+                                            >
+                                              {booking.status}
+                                            </Badge>
+                                          </div>
+                                          <div className="text-sm font-medium truncate mb-1">
+                                            {booking.service_name}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            ${booking.amount_paid}
+                                          </div>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* All Bookings Section */}
                 <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                   <CardHeader className="bg-primary/5 border-b">
@@ -451,9 +600,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                     <CardDescription>Your upcoming and past appointments</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {bookings.length > 0 ? (
+                    {activeBookings.length > 0 ? (
                       <div className="divide-y">
-                        {sortBookingsByDateTime(bookings).map((booking) => (
+                        {sortBookingsByDateTime(activeBookings).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">

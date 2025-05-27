@@ -90,15 +90,18 @@ export default function AdminDashboard() {
   // Group bookings by status and date
   const today = new Date();
   
-  const upcomingBookings = bookings.filter(booking => 
+  // Filter out cancelled bookings for overview and bookings tabs
+  const activeBookings = bookings.filter(booking => booking.status !== 'cancelled');
+  
+  const upcomingBookings = activeBookings.filter(booking => 
     (booking.status === 'confirmed' || booking.status === 'pending') && 
-    new Date(booking.appointment_date) >= today
+    parseDateFromDB(booking.appointment_date) >= today
   );
   
   const pastBookings = bookings.filter(booking => 
     booking.status === 'completed' || 
     booking.status === 'cancelled' || 
-    (booking.status === 'confirmed' && new Date(booking.appointment_date) < today)
+    (booking.status === 'confirmed' && parseDateFromDB(booking.appointment_date) < today)
   );
 
   // Get week days for the weekly view
@@ -108,7 +111,7 @@ export default function AdminDashboard() {
 
   // Group bookings by day for the weekly view
   const getBookingsForDay = (date: Date) => {
-    return bookings.filter(booking => {
+    return activeBookings.filter(booking => {
       // Use standardized date parsing and comparison
       return isSameDayUtil(booking.appointment_date, date) && 
              (booking.status === 'confirmed' || booking.status === 'pending');
@@ -433,9 +436,9 @@ export default function AdminDashboard() {
                     <CardDescription>Latest 5 bookings across all users</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {bookings.length > 0 ? (
+                    {activeBookings.length > 0 ? (
                       <div className="divide-y">
-                        {sortBookingsByDateTime(bookings).slice(0, 5).map((booking) => (
+                        {sortBookingsByDateTime(activeBookings).slice(0, 5).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -648,9 +651,9 @@ export default function AdminDashboard() {
                     <CardDescription>Manage all customer bookings</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
-                    {bookings.length > 0 ? (
+                    {activeBookings.length > 0 ? (
                       <div className="divide-y">
-                        {sortBookingsByDateTime(bookings).map((booking) => (
+                        {sortBookingsByDateTime(activeBookings).map((booking) => (
                           <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="sm:mr-4">
                               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
