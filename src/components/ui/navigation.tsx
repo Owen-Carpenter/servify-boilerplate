@@ -151,7 +151,7 @@ export function Navigation() {
                     className={cn(
                       "border-0",
                       isScrolled 
-                        ? "bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200"
+                        ? "bg-primary hover:bg-primary/90 text-white transition-colors duration-200"
                         : "bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
                     )}
                   >
@@ -205,7 +205,7 @@ export function Navigation() {
                     className={cn(
                       "border-0",
                       isScrolled 
-                        ? "bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" 
+                        ? "bg-primary hover:bg-primary/90 text-white transition-colors duration-200" 
                         : "bg-white text-primary hover:bg-white/90"
                     )}
                   >
@@ -221,7 +221,7 @@ export function Navigation() {
         {/* Mobile Navigation */}
         <div 
           className={cn(
-            "fixed inset-0 top-0 left-0 right-0 bottom-0 bg-[#6E3FC9] text-white flex flex-col justify-center items-center transition-opacity duration-300 md:hidden overflow-y-auto z-40",
+            "fixed inset-0 top-0 left-0 right-0 bottom-0 bg-primary text-white flex flex-col justify-center items-center transition-opacity duration-300 md:hidden overflow-y-auto z-40",
             mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
           style={{ height: "100vh" }}
@@ -246,7 +246,7 @@ export function Navigation() {
                   <Link href="/profile" onClick={() => setMobileMenuOpen(false)}>
                     <Button 
                       variant="secondary" 
-                      className="w-48 bg-white text-[#6E3FC9] hover:bg-white/90 font-medium"
+                      className="w-48 bg-white text-primary hover:bg-white/90 font-medium"
                     >
                       <User className="w-4 h-4 mr-2" />
                       <span>{userName}</span>
@@ -254,7 +254,7 @@ export function Navigation() {
                   </Link>
                   <Button 
                     variant="secondary" 
-                    className="w-48 bg-white text-[#6E3FC9] hover:bg-white/90"
+                    className="w-48 bg-white text-primary hover:bg-white/90"
                     onClick={() => {
                       signOut();
                       setMobileMenuOpen(false);
@@ -269,7 +269,7 @@ export function Navigation() {
                   <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                     <Button 
                       variant="secondary" 
-                      className="w-48 bg-white text-[#6E3FC9] hover:bg-white/90 font-medium"
+                      className="w-48 bg-white text-primary hover:bg-white/90 font-medium"
                     >
                       <LogIn className="w-4 h-4 mr-2" />
                       Login
@@ -278,7 +278,7 @@ export function Navigation() {
                   <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
                     <Button 
                       variant="secondary" 
-                      className="w-48 bg-white text-[#6E3FC9] hover:bg-white/90"
+                      className="w-48 bg-white text-primary hover:bg-white/90"
                     >
                       <User className="w-4 h-4 mr-2" />
                       Register

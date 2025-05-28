@@ -276,7 +276,7 @@ export default function AdminRescheduleAppointmentPage() {
             <CardTitle className="text-2xl gradient-text">Appointment Not Found</CardTitle>
           </CardHeader>
           <CardFooter className="justify-center pb-6">
-            <Button onClick={() => router.push('/admin')} className="bg-[#6E3FC9] hover:bg-[#5931A9] text-white">
+            <Button onClick={() => router.push('/admin')} className="bg-primary hover:bg-primary/90 text-white">
               <ArrowLeft className="mr-2" size={16} />
               Back to Admin Dashboard
             </Button>

@@ -109,8 +109,8 @@ export default function ResetPasswordPage() {
       
       <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-2xl border-0 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#6E3FC9]/30 rounded-full"></div>
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#FF8A4C]/30 rounded-full"></div>
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/30 rounded-full"></div>
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/30 rounded-full"></div>
         </div>
         
         <CardHeader className="relative z-10">
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
               </div>
               
               <Button 
-                className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" 
+                className="w-full bg-primary hover:bg-primary/90 text-white transition-colors duration-200" 
                 type="submit" 
                 disabled={isLoading}
               >

@@ -245,7 +245,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
             <CardDescription>The service you&apos;re looking for doesn&apos;t exist or has been removed.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-center pb-6">
-            <Button onClick={handleBack} className="bg-[#6E3FC9] hover:bg-[#5931A9] text-white">
+            <Button onClick={handleBack} className="bg-primary hover:bg-primary/90 text-white">
               <ArrowLeft className="mr-2" size={16} />
               Back to Services
             </Button>

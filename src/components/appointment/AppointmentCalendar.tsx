@@ -1,25 +1,18 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Calendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { Calendar, momentLocalizer, View } from 'react-big-calendar';
+import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Appointment } from '@/lib/appointments';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, Clock, MapPin, User, Eye } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 // Setup localizer for react-big-calendar
-const locales = {
-  'en-US': require('date-fns/locale/en-US'),
-};
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-});
+const localizer = momentLocalizer(moment);
 
 // Event-like interface for the calendar
 interface CalendarEvent {
@@ -29,7 +22,7 @@ interface CalendarEvent {
   end: Date;
   status: string;
   allDay?: boolean;
-  resource?: any;
+  resource?: unknown;
 }
 
 interface AppointmentCalendarProps {
@@ -42,37 +35,12 @@ export function AppointmentCalendar({ appointments, onSelectEvent }: Appointment
   const [date, setDate] = useState(new Date());
   
   // Convert appointments to calendar events
-  const events: CalendarEvent[] = appointments.map((appointment) => {
-    // Parse the appointment time (e.g., "10:00 AM" -> hours and minutes)
-    const timeParts = appointment.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    let hours = 0;
-    let minutes = 0;
-    
-    if (timeParts) {
-      hours = parseInt(timeParts[1], 10);
-      minutes = parseInt(timeParts[2], 10);
-      
-      // Adjust hours for PM
-      if (timeParts[3].toUpperCase() === 'PM' && hours < 12) {
-        hours += 12;
-      }
-      // Adjust for 12 AM
-      if (timeParts[3].toUpperCase() === 'AM' && hours === 12) {
-        hours = 0;
-      }
-    }
-    
-    // Create start date from appointment date and parsed time
+  const events: CalendarEvent[] = appointments.map((appointment: Appointment) => {
     const start = new Date(appointment.date);
-    start.setHours(hours, minutes, 0, 0);
+    start.setHours(parseInt(appointment.time.split(':')[0]), parseInt(appointment.time.split(':')[1]));
     
-    // Parse duration (e.g., "60 min" -> 60)
-    const durationMatch = appointment.duration.match(/(\d+)/);
-    const durationMinutes = durationMatch ? parseInt(durationMatch[1], 10) : 60;
-    
-    // Calculate end time based on duration
     const end = new Date(start);
-    end.setMinutes(end.getMinutes() + durationMinutes);
+    end.setHours(end.getHours() + 1); // Assuming 1-hour duration
     
     return {
       id: appointment.id,
@@ -85,33 +53,34 @@ export function AppointmentCalendar({ appointments, onSelectEvent }: Appointment
 
   // Apply custom styling based on appointment status
   const eventStyleGetter = (event: CalendarEvent) => {
-    let style = {
-      backgroundColor: '#6E3FC9', // Default primary color
+    const style = {
+      backgroundColor: '#3F88C5', // Steel blue - primary color
       borderRadius: '5px',
+      opacity: 0.8,
       color: 'white',
       border: '0px',
-      display: 'block',
+      display: 'block'
     };
-    
-    // Style based on status
+
+    // Map status to new color palette
     switch (event.status) {
       case 'confirmed':
-        style.backgroundColor = '#10b981'; // Green
+        style.backgroundColor = '#10b981'; // Keep green for confirmed
         break;
       case 'pending':
-        style.backgroundColor = '#f59e0b'; // Amber
+        style.backgroundColor = '#F49D37'; // Carrot orange for pending
         break;
       case 'cancelled':
-        style.backgroundColor = '#ef4444'; // Red
+        style.backgroundColor = '#D72638'; // Crimson for cancelled
         break;
       case 'completed':
-        style.backgroundColor = '#3b82f6'; // Blue
+        style.backgroundColor = '#3F88C5'; // Steel blue for completed
         break;
+      default:
+        style.backgroundColor = '#3F88C5'; // Steel blue default
     }
     
-    return {
-      style
-    };
+    return { style };
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {

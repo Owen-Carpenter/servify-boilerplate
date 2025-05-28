@@ -52,66 +52,70 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(0.985 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Purple as primary instead of blue */
-  --primary: oklch(0.55 0.2 290);
+  /* Steel blue (#3F88C5) as primary */
+  --primary: oklch(0.59 0.12 230);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.95 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.95 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  /* Orange as accent instead of emerald */
-  --accent: oklch(0.75 0.15 60);
+  /* Carrot orange (#F49D37) as accent */
+  --accent: oklch(0.72 0.12 55);
   --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /* Crimson (#D72638) for destructive actions */
+  --destructive: oklch(0.55 0.18 15);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.18 60);
-  --chart-3: oklch(0.55 0.2 290);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: oklch(0.59 0.12 230);
+  --chart-2: oklch(0.72 0.12 55);
+  --chart-3: oklch(0.55 0.18 15);
+  --chart-4: oklch(0.25 0.04 280);
+  --chart-5: oklch(0.55 0.18 5);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.55 0.2 290);
+  --sidebar-primary: oklch(0.59 0.12 230);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.75 0.15 60);
+  --sidebar-accent: oklch(0.72 0.12 55);
   --sidebar-accent-foreground: oklch(0.145 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  --background: oklch(0.2 0.02 290);
+  /* Dark purple (#140F2D) as dark background */
+  --background: oklch(0.15 0.04 280);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.25 0.02 290);
+  --card: oklch(0.2 0.04 280);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.25 0.02 290);
+  --popover: oklch(0.2 0.04 280);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.55 0.2 290);
+  /* Steel blue (#3F88C5) as primary */
+  --primary: oklch(0.59 0.12 230);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.3 0.02 290);
+  --secondary: oklch(0.25 0.04 280);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.3 0.02 290);
+  --muted: oklch(0.25 0.04 280);
   --muted-foreground: oklch(0.708 0 0);
-  /* Orange as accent */
-  --accent: oklch(0.65 0.15 60);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Carrot orange (#F49D37) as accent */
+  --accent: oklch(0.72 0.12 55);
+  --accent-foreground: oklch(0.145 0 0);
+  /* Crimson (#D72638) for destructive actions */
+  --destructive: oklch(0.55 0.18 15);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.55 0.2 290);
-  --chart-2: oklch(0.65 0.15 60);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.25 0.02 290);
+  --chart-1: oklch(0.59 0.12 230);
+  --chart-2: oklch(0.72 0.12 55);
+  --chart-3: oklch(0.55 0.18 15);
+  --chart-4: oklch(0.25 0.04 280);
+  --chart-5: oklch(0.55 0.18 5);
+  --sidebar: oklch(0.2 0.04 280);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.55 0.2 290);
+  --sidebar-primary: oklch(0.59 0.12 230);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.65 0.15 60);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.72 0.12 55);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
@@ -126,12 +130,12 @@
 }
 
 .gradient-bg {
-  background: linear-gradient(135deg, #6E3FC9 0%, #FF8A4C 100%);
+  background: linear-gradient(135deg, #3F88C5 0%, #F49D37 100%);
 }
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #9361FF 0%, #FF8A4C 100%);
+  background-image: linear-gradient(135deg, #3F88C5 0%, #F49D37 100%);
 }
 
 /* Primary button styles */
@@ -470,7 +474,7 @@
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 15px rgba(110, 63, 201, 0.5);
+  box-shadow: 0 0 15px rgba(208, 206, 212, 0.5);
   transform: translateY(-3px);
 }
 

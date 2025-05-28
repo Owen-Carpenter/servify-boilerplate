@@ -125,8 +125,8 @@ export default function RegisterPage() {
         <div className="w-full max-w-md z-10">
           <Card className="w-full backdrop-blur-sm bg-white/90 shadow-2xl border-0 overflow-hidden">
             <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-              <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#6E3FC9]/30 rounded-full"></div>
-              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#FF8A4C]/30 rounded-full"></div>
+              <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/30 rounded-full"></div>
+              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/30 rounded-full"></div>
             </div>
             <CardHeader className="relative z-10">
               <CardTitle className="text-2xl text-center gradient-text">Email Verified</CardTitle>
@@ -143,7 +143,7 @@ export default function RegisterPage() {
                 </AlertDescription>
               </Alert>
               <Button 
-                className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" 
+                className="w-full bg-primary hover:bg-primary/90 text-white transition-colors duration-200" 
                 onClick={() => router.push("/auth/login")}
               >
                 Sign In
@@ -167,8 +167,8 @@ export default function RegisterPage() {
         <div className="w-full max-w-md z-10">
           <Card className="w-full backdrop-blur-sm bg-white/90 shadow-2xl border-0 overflow-hidden">
             <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-              <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#6E3FC9]/30 rounded-full"></div>
-              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#FF8A4C]/30 rounded-full"></div>
+              <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/30 rounded-full"></div>
+              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/30 rounded-full"></div>
             </div>
             <CardHeader className="relative z-10">
               <CardTitle className="text-2xl text-center gradient-text">Check Your Email</CardTitle>
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                 <p className="mt-2">Didn&apos;t receive an email? Check your spam folder or try registering again.</p>
               </div>
               <Button 
-                className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" 
+                className="w-full bg-primary hover:bg-primary/90 text-white transition-colors duration-200" 
                 onClick={() => router.push("/auth/login")}
               >
                 Go to Sign In
@@ -218,8 +218,8 @@ export default function RegisterPage() {
         
         <Card className="w-full backdrop-blur-sm bg-white/90 shadow-2xl border-0 overflow-hidden">
           <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#6E3FC9]/30 rounded-full"></div>
-            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#FF8A4C]/30 rounded-full"></div>
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/30 rounded-full"></div>
+            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-accent/30 rounded-full"></div>
           </div>
           <CardHeader className="space-y-1 relative z-10">
             <CardTitle className="text-2xl text-center font-bold gradient-text">Create an Account</CardTitle>
@@ -369,7 +369,7 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-                <Button className="w-full bg-[#6E3FC9] hover:bg-[#5931A9] text-white transition-colors duration-200" type="submit" disabled={isLoading}>
+                <Button className="w-full bg-primary hover:bg-primary/90 text-white transition-colors duration-200" type="submit" disabled={isLoading}>
                   <UserPlus className="mr-2 h-4 w-4" />
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
