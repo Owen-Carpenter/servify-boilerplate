@@ -472,20 +472,20 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
-                              <Badge className={
+                            <div className="flex flex-col gap-3 sm:flex-row sm:gap-2 sm:items-center">
+                              <Badge className={`self-center sm:self-auto ${
                                 booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                 booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                                 'bg-red-100 text-red-800'
-                              }>
+                              }`}>
                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                               </Badge>
-                              <div className="flex gap-2 mt-2 sm:mt-0">
+                              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="bg-white"
+                                  className="bg-white min-w-0 flex-shrink-0"
                                   onClick={() => router.push(`/admin/bookings/${booking.id}`)}
                                 >
                                   Details
@@ -501,7 +501,7 @@ export default function AdminDashboard() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
+                                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600 min-w-0 flex-shrink-0"
                                       onClick={() => router.push(`/admin/bookings/${booking.id}/reschedule`)}
                                     >
                                       Reschedule
@@ -511,7 +511,7 @@ export default function AdminDashboard() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive min-w-0 flex-shrink-0"
                                         >
                                           Cancel
                                         </Button>
@@ -707,20 +707,20 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
-                              <Badge className={
+                            <div className="flex flex-col gap-3 sm:flex-row sm:gap-2 sm:items-center">
+                              <Badge className={`self-center sm:self-auto ${
                                 booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                 booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                 booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                                 'bg-red-100 text-red-800'
-                              }>
+                              }`}>
                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                               </Badge>
-                              <div className="flex gap-2 mt-2 sm:mt-0">
+                              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="bg-white"
+                                  className="bg-white min-w-0 flex-shrink-0"
                                   onClick={() => router.push(`/admin/bookings/${booking.id}`)}
                                 >
                                   Details
@@ -736,7 +736,7 @@ export default function AdminDashboard() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
+                                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600 min-w-0 flex-shrink-0"
                                       onClick={() => router.push(`/admin/bookings/${booking.id}/reschedule`)}
                                     >
                                       Reschedule
@@ -746,7 +746,7 @@ export default function AdminDashboard() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                                          className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive min-w-0 flex-shrink-0"
                                         >
                                           Cancel
                                         </Button>

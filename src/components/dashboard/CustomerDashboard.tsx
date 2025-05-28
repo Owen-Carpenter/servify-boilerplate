@@ -329,57 +329,17 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
             {/* Tab Contents */}
             <div className="mt-8">
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   {/* Display pending appointments that need payment at the top */}
-                  <div className="lg:col-span-3">
+                  <div>
                     <PendingAppointments 
                       appointments={appointments} 
                       onAppointmentDeleted={handleAppointmentDeleted} 
                     />
                   </div>
 
-                  {/* User Profile Summary Card */}
-                  <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
-                    <CardHeader className="bg-primary/5 border-b">
-                      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                        <Avatar className="h-16 w-16 shrink-0">
-                          <AvatarImage src={session?.user?.image || ""} />
-                          <AvatarFallback className="text-xl bg-primary text-white">
-                            {(userProfile?.name || session?.user?.name || "U").charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-center sm:text-left min-w-0 flex-1">
-                          <CardTitle className="truncate">{userProfile?.name || session?.user?.name || "User"}</CardTitle>
-                          <CardDescription className="truncate">{userProfile?.email || session?.user?.email || ""}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-center justify-center sm:justify-start">
-                        <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>Member</span>
-                      </div>
-                      {userProfile?.phone && (
-                        <div className="flex items-center justify-center sm:justify-start">
-                          <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="truncate">{userProfile.phone}</span>
-                        </div>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex justify-center p-4 bg-secondary/10">
-                      <Button 
-                        variant="outline" 
-                        className="w-full bg-white"
-                        onClick={() => router.push('/profile')}
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        View Full Profile
-                      </Button>
-                    </CardFooter>
-                  </Card>
-
                   {/* Appointment Stats */}
-                  <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0 lg:col-span-2">
+                  <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
                     <CardHeader className="bg-primary/5 border-b">
                       <CardTitle>Booking Statistics</CardTitle>
                     </CardHeader>
@@ -463,7 +423,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="bg-white flex-1 sm:flex-none"
+                                  className="bg-white flex-1 sm:flex-none min-w-0"
                                   onClick={() => router.push(`/appointments/${booking.id}`)}
                                 >
                                   Details
@@ -474,7 +434,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive flex-1 sm:flex-none"
+                                        className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive flex-1 sm:flex-none min-w-0"
                                       >
                                         Cancel
                                       </Button>
@@ -512,6 +472,54 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                       </div>
                     )}
                   </CardContent>
+                </Card>
+                
+                {/* Appointment Calendar */}
+                <div>
+                  <AppointmentCalendar 
+                    appointments={appointments} 
+                    onSelectEvent={handleSelectAppointment}
+                  />
+                </div>
+                
+                {/* User Profile Summary Card */}
+                <Card className="backdrop-blur-sm bg-white/90 shadow-md border-0">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                      <Avatar className="h-16 w-16 shrink-0">
+                        <AvatarImage src={session?.user?.image || ""} />
+                        <AvatarFallback className="text-xl bg-primary text-white">
+                          {(userProfile?.name || session?.user?.name || "U").charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-center sm:text-left min-w-0 flex-1">
+                        <CardTitle className="truncate">{userProfile?.name || session?.user?.name || "User"}</CardTitle>
+                        <CardDescription className="truncate">{userProfile?.email || session?.user?.email || ""}</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-center sm:justify-start">
+                      <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>Member</span>
+                    </div>
+                    {userProfile?.phone && (
+                      <div className="flex items-center justify-center sm:justify-start">
+                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="truncate">{userProfile.phone}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex justify-center p-4 bg-secondary/10">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-white"
+                      onClick={() => router.push('/profile')}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      View Full Profile
+                    </Button>
+                  </CardFooter>
                 </Card>
               </TabsContent>
 
@@ -821,13 +829,15 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
             </div>
           </Tabs>
 
-          {/* Appointment Calendar at the bottom */}
-          <div className="mt-8">
-            <AppointmentCalendar 
-              appointments={appointments} 
-              onSelectEvent={handleSelectAppointment}
-            />
-          </div>
+          {/* Appointment Calendar for other tabs */}
+          {activeTab !== 'overview' && (
+            <div className="mt-8">
+              <AppointmentCalendar 
+                appointments={appointments} 
+                onSelectEvent={handleSelectAppointment}
+              />
+            </div>
+          )}
         </div>
       </div>
       <Footer />
