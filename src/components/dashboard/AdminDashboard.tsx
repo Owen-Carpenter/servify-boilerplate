@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { 
   Calendar, Clock, BadgeCheck, 
   AlertTriangle, X, User as UserIcon,
-  Search, ChevronLeft, ChevronRight, Mail, Phone
+  Search, ChevronLeft, ChevronRight, Mail, Phone, CalendarOff
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,8 +22,11 @@ import { type Appointment } from "@/lib/appointments";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDialog } from "@/components/admin/EmailDialog";
+import { TimeOffDialog } from "@/components/admin/TimeOffDialog";
+import { TimeOffManagementDialog } from "@/components/admin/TimeOffManagementDialog";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, isSameDay as isSameDayUtil } from "@/lib/date-utils";
+import { getTimeOffPeriods, type TimeOff } from "@/lib/supabase-timeoff";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,6 +97,11 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
+  const [timeOffPeriods, setTimeOffPeriods] = useState<TimeOff[]>([]);
+  
+  // Time-off management state
+  const [selectedTimeOff, setSelectedTimeOff] = useState<TimeOff | null>(null);
+  const [isTimeOffDialogOpen, setIsTimeOffDialogOpen] = useState(false);
   
   // Weekly view state
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -132,6 +140,26 @@ export default function AdminDashboard() {
       const timeB = parseTimeToMinutes(b.appointment_time);
       return timeA - timeB;
     });
+  };
+
+  // Get time off for a specific day
+  const getTimeOffForDay = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return timeOffPeriods.filter(timeOff => 
+      dateStr >= timeOff.start_date && dateStr <= timeOff.end_date
+    );
+  };
+
+  // Load time off periods
+  const loadTimeOffPeriods = async () => {
+    try {
+      const fromDate = format(subWeeks(weekStart, 2), 'yyyy-MM-dd');
+      const toDate = format(addWeeks(weekEnd, 2), 'yyyy-MM-dd');
+      const timeOff = await getTimeOffPeriods(fromDate, toDate);
+      setTimeOffPeriods(timeOff);
+    } catch (error) {
+      console.error('Error loading time off periods:', error);
+    }
   };
 
   useEffect(() => {
@@ -177,6 +205,9 @@ export default function AdminDashboard() {
         }));
         
         setAppointments(appointmentsData);
+        
+        // Load time off periods
+        await loadTimeOffPeriods();
       } catch (error) {
         console.error("Error loading admin dashboard data:", error);
         toast({
@@ -191,6 +222,11 @@ export default function AdminDashboard() {
     
     loadData();
   }, []);
+
+  // Reload time off when week changes
+  useEffect(() => {
+    loadTimeOffPeriods();
+  }, [currentWeek]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -234,6 +270,30 @@ export default function AdminDashboard() {
   // Function to handle appointment selection from calendar
   const handleSelectAppointment = (appointment: Appointment) => {
     router.push(`/admin/bookings/${appointment.id}`);
+  };
+
+  // Handle time off creation
+  const handleTimeOffCreated = (timeOff: TimeOff) => {
+    setTimeOffPeriods(prev => [...prev, timeOff]);
+    toast({
+      title: "Time Off Added",
+      description: "The time off period has been added to the calendar.",
+    });
+  };
+
+  // Handle time off deletion
+  const handleTimeOffDeleted = (timeOffId: string) => {
+    setTimeOffPeriods(prev => prev.filter(timeOff => timeOff.id !== timeOffId));
+    toast({
+      title: "Time Off Deleted",
+      description: "The time off period has been removed from the calendar.",
+    });
+  };
+
+  // Handle time off click
+  const handleTimeOffClick = (timeOff: TimeOff) => {
+    setSelectedTimeOff(timeOff);
+    setIsTimeOffDialogOpen(true);
   };
 
   // Function to fetch users/customers
@@ -329,12 +389,15 @@ export default function AdminDashboard() {
                 There are {upcomingBookings.length} upcoming bookings
               </p>
             </div>
-            <Button 
-              onClick={() => router.push('/services')}
-              className="bg-white text-primary hover:bg-white/90 shadow-sm"
-            >
-              Manage Services
-            </Button>
+            <div className="flex gap-2">
+              <TimeOffDialog onTimeOffCreated={handleTimeOffCreated} />
+              <Button 
+                onClick={() => router.push('/services')}
+                className="bg-white text-primary hover:bg-white/90 shadow-sm"
+              >
+                Manage Services
+              </Button>
+            </div>
           </div>
 
           {/* Main Content Tabs */}
@@ -381,9 +444,7 @@ export default function AdminDashboard() {
                         <span>Admin Account</span>
                       </div>
                       <div className="flex items-center">
-                        <svg className="h-4 w-4 mr-2 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
+                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span>{session?.user.email}</span>
                       </div>
                     </CardContent>
@@ -573,6 +634,15 @@ export default function AdminDashboard() {
                         </CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
+                        <TimeOffDialog
+                          onTimeOffCreated={handleTimeOffCreated}
+                          trigger={
+                            <Button variant="outline" size="sm" className="bg-white">
+                              <CalendarOff className="h-4 w-4 mr-2" />
+                              Add Time Off
+                            </Button>
+                          }
+                        />
                         <Button
                           variant="outline"
                           size="sm"
@@ -625,10 +695,34 @@ export default function AdminDashboard() {
                           <tr>
                             {weekDays.map((day) => {
                               const dayBookings = getBookingsForDay(day);
+                              const dayTimeOff = getTimeOffForDay(day);
                               return (
                                 <td key={day.toISOString()} className="p-2 align-top border-r last:border-r-0 min-h-[200px]">
                                   <div className="space-y-2">
-                                    {dayBookings.length === 0 ? (
+                                    {/* Time off periods */}
+                                    {dayTimeOff.map((timeOff) => (
+                                      <div
+                                        key={timeOff.id}
+                                        className="p-2 rounded-md bg-red-50 border border-red-200 text-red-800 cursor-pointer hover:bg-red-100 transition-colors"
+                                        onClick={() => handleTimeOffClick(timeOff)}
+                                        title="Click to manage this time off period"
+                                      >
+                                        <div className="text-xs font-medium truncate">
+                                          {timeOff.title}
+                                        </div>
+                                        <div className="text-xs">
+                                          {timeOff.is_all_day ? 'All day' : 
+                                            `${timeOff.start_time?.substring(0, 5)} - ${timeOff.end_time?.substring(0, 5)}`
+                                          }
+                                        </div>
+                                        <Badge className="text-xs bg-red-100 text-red-700 mt-1">
+                                          {timeOff.type.replace('_', ' ')}
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                    
+                                    {/* Bookings */}
+                                    {dayBookings.length === 0 && dayTimeOff.length === 0 ? (
                                       <div className="text-center text-muted-foreground text-sm py-4">
                                         No appointments
                                       </div>
@@ -1116,9 +1210,24 @@ export default function AdminDashboard() {
           <div className="mt-8">
             <AppointmentCalendar 
               appointments={appointments} 
+              timeOffPeriods={timeOffPeriods}
               onSelectEvent={handleSelectAppointment}
+              onSelectTimeOff={handleTimeOffClick}
             />
           </div>
+
+          {/* Time Off Management Dialog */}
+          {selectedTimeOff && (
+            <TimeOffManagementDialog
+              timeOff={selectedTimeOff}
+              isOpen={isTimeOffDialogOpen}
+              onClose={() => {
+                setIsTimeOffDialogOpen(false);
+                setSelectedTimeOff(null);
+              }}
+              onTimeOffDeleted={handleTimeOffDeleted}
+            />
+          )}
         </div>
       </div>
       <Footer />

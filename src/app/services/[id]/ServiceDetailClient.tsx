@@ -12,6 +12,7 @@ import { Clock, ArrowLeft, MapPin, Check, DollarSign, CalendarIcon } from "lucid
 import { format, addMonths, parseISO } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { checkTimeOffConflict, getTimeOffForDate, type TimeOff } from "@/lib/supabase-timeoff";
 
 // All possible time slots
 const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
@@ -45,6 +46,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
   const [timeSlotDisplay, setTimeSlotDisplay] = useState<Record<string, { available: boolean; reason?: string }>>({});
   const [existingBookings, setExistingBookings] = useState<DbBooking[]>([]);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [timeOffPeriods, setTimeOffPeriods] = useState<TimeOff[]>([]);
   
   // Handle back button click
   const handleBack = () => {
@@ -84,7 +86,47 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     return `${hours}:${mins.toString().padStart(2, '0')} ${period}`;
   };
 
-  // Fetch existing bookings when component mounts
+  // Check if a time slot conflicts with time off
+  const isTimeSlotBlockedByTimeOff = (timeSlot: string, date: Date, durationMinutes: number): { blocked: boolean; reason?: string } => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const timeOffForDate = timeOffPeriods.filter(timeOff => 
+      dateStr >= timeOff.start_date && dateStr <= timeOff.end_date
+    );
+
+    for (const timeOff of timeOffForDate) {
+      // If it's all day time off, block the entire day
+      if (timeOff.is_all_day) {
+        return {
+          blocked: true,
+          reason: `Unavailable due to ${timeOff.title}`
+        };
+      }
+
+      // Check time overlap for partial day time off
+      if (timeOff.start_time && timeOff.end_time) {
+        const timeSlotMinutes = parseTimeToMinutes(timeSlot);
+        const timeSlotEndMinutes = timeSlotMinutes + durationMinutes;
+        
+        const [timeOffStartHour, timeOffStartMin] = timeOff.start_time.split(':').map(Number);
+        const [timeOffEndHour, timeOffEndMin] = timeOff.end_time.split(':').map(Number);
+        
+        const timeOffStartMinutes = timeOffStartHour * 60 + timeOffStartMin;
+        const timeOffEndMinutes = timeOffEndHour * 60 + timeOffEndMin;
+
+        // Check if time slot overlaps with time off
+        if (!(timeSlotEndMinutes <= timeOffStartMinutes || timeSlotMinutes >= timeOffEndMinutes)) {
+          return {
+            blocked: true,
+            reason: `Conflicts with ${timeOff.title} (${formatMinutesToTimeDisplay(timeOffStartMinutes)} - ${formatMinutesToTimeDisplay(timeOffEndMinutes)})`
+          };
+        }
+      }
+    }
+
+    return { blocked: false };
+  };
+
+  // Fetch existing bookings and time off when component mounts
   useEffect(() => {
     const fetchExistingBookings = async () => {
       setIsLoadingBookings(true);
@@ -150,6 +192,23 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     fetchExistingBookings();
   }, []);
 
+  // Fetch time off periods when date selection changes
+  useEffect(() => {
+    const fetchTimeOff = async () => {
+      if (!selectedDate) return;
+      
+      try {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd');
+        const timeOff = await getTimeOffForDate(dateStr);
+        setTimeOffPeriods(timeOff);
+      } catch (error) {
+        console.error('Error fetching time off:', error);
+      }
+    };
+
+    fetchTimeOff();
+  }, [selectedDate]);
+
   // Get service duration value in minutes
   const getServiceDurationMinutes = (serviceTime: string): number => {
     const durationMatch = serviceTime.match(/(\d+)/);
@@ -194,9 +253,19 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     // Create a display object for each time slot
     const timeDisplay: Record<string, { available: boolean; reason?: string }> = {};
     
-    // Check each time slot against existing bookings
+    // Check each time slot against existing bookings and time off
     const available = ALL_TIME_SLOTS.filter(timeSlot => {
-      // Check if this time slot overlaps with any existing booking
+      // First check time off conflicts
+      const timeOffCheck = isTimeSlotBlockedByTimeOff(timeSlot, selectedDate, serviceDurationMinutes);
+      if (timeOffCheck.blocked) {
+        timeDisplay[timeSlot] = {
+          available: false,
+          reason: timeOffCheck.reason
+        };
+        return false;
+      }
+
+      // Then check booking conflicts
       const overlappingBooking = dateBookings.find(booking => {
         // Get the service duration for this booking's service
         const bookingServiceDuration = getServiceDurationByServiceId(booking.service_id);
@@ -233,8 +302,8 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     if (selectedTime && !available.includes(selectedTime)) {
       setSelectedTime("");
     }
-  }, [selectedDate, service, existingBookings, selectedTime]);
-  
+  }, [selectedDate, service, existingBookings, selectedTime, timeOffPeriods]);
+
   // If service is null, show error state
   if (!service) {
     return (
@@ -255,7 +324,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     );
   }
 
-  // Handle booking
+  // Handle booking with time off validation
   const handleBooking = async () => {
     if (!selectedDate) {
       toast.error("Please select a date");
@@ -265,6 +334,24 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
     if (!selectedTime) {
       toast.error("Please select a time");
       return;
+    }
+
+    // Double-check for time off conflicts before proceeding
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const serviceDuration = getServiceDurationMinutes(service.time);
+    const [hour, minute] = selectedTime.split(/[:\s]/);
+    const timeStr = `${hour}:${minute}`;
+
+    try {
+      const hasConflict = await checkTimeOffConflict(dateStr, timeStr, serviceDuration);
+      
+      if (hasConflict) {
+        toast.error("This time slot conflicts with scheduled time off. Please select a different time.");
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking time off conflict:", error);
+      // Continue with booking if time off check fails
     }
     
     // Format date for display

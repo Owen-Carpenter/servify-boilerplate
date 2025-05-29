@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRouter, usePathname } from "next/navigation";
-import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone, ChevronLeft, ChevronRight, CalendarOff } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
@@ -19,6 +19,7 @@ import { getUserProfile, type UserProfile } from "@/lib/auth";
 import { PageLoader } from "@/components/ui/page-loader";
 import { parseDateFromDB, formatDateForDisplay, getTodayForDB, isSameDay } from "@/lib/date-utils";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
+import { getTimeOffPeriods, type TimeOff } from "@/lib/supabase-timeoff";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +71,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   const [bookings, setBookings] = useState<SupabaseBooking[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [timeOffPeriods, setTimeOffPeriods] = useState<TimeOff[]>([]);
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("overview");
@@ -80,6 +82,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     cancelled: 0
   });
   
+  // Time-off viewing state (customers can view but not delete)
+  const [selectedTimeOff, setSelectedTimeOff] = useState<TimeOff | null>(null);
+
   // Weekly view state
   const [currentWeek, setCurrentWeek] = useState(new Date());
 
@@ -120,6 +125,14 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     });
   };
 
+  // Get time off for a specific day
+  const getTimeOffForDay = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return timeOffPeriods.filter(timeOff => 
+      dateStr >= timeOff.start_date && dateStr <= timeOff.end_date
+    );
+  };
+
   // Function to load user profile data
   const loadUserProfile = async (userId: string) => {
     try {
@@ -131,6 +144,23 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
       console.error("Error loading user profile:", error);
     }
   };
+
+  // Load time off periods
+  const loadTimeOffPeriods = async () => {
+    try {
+      const fromDate = format(subWeeks(weekStart, 2), 'yyyy-MM-dd');
+      const toDate = format(addWeeks(weekEnd, 2), 'yyyy-MM-dd');
+      const timeOff = await getTimeOffPeriods(fromDate, toDate);
+      setTimeOffPeriods(timeOff);
+    } catch (error) {
+      console.error('Error loading time off periods:', error);
+    }
+  };
+
+  // Reload time off when week changes
+  useEffect(() => {
+    loadTimeOffPeriods();
+  }, [currentWeek, weekStart, weekEnd]);
 
   useEffect(() => {
     async function loadData() {
@@ -174,6 +204,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
         }));
         
         setAppointments(appointmentsData);
+        
+        // Load time off periods for calendar display (initial load)
+        await loadTimeOffPeriods();
       } catch (error) {
         console.error("Error loading dashboard data:", error);
         toast({
@@ -271,6 +304,11 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
   const goToCurrentWeek = () => {
     setCurrentWeek(new Date());
+  };
+
+  // Handle time off click (view only for customers)
+  const handleTimeOffClick = (timeOff: TimeOff) => {
+    setSelectedTimeOff(timeOff);
   };
 
   if (isLoading) {
@@ -478,6 +516,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                 <div>
                   <AppointmentCalendar 
                     appointments={appointments} 
+                    timeOffPeriods={timeOffPeriods}
                     onSelectEvent={handleSelectAppointment}
                   />
                 </div>
@@ -587,10 +626,34 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                           <tr>
                             {weekDays.map((day) => {
                               const dayBookings = getBookingsForDay(day);
+                              const timeOffForDay = getTimeOffForDay(day);
                               return (
                                 <td key={day.toISOString()} className="p-2 align-top border-r last:border-r-0 min-h-[200px]">
                                   <div className="space-y-2">
-                                    {dayBookings.length === 0 ? (
+                                    {/* Time off periods */}
+                                    {timeOffForDay.map((timeOff) => (
+                                      <div
+                                        key={timeOff.id}
+                                        className="p-2 rounded-md bg-red-50 border border-red-200 text-red-800 cursor-pointer hover:bg-red-100 transition-colors"
+                                        onClick={() => handleTimeOffClick(timeOff)}
+                                        title="Click to view time off details"
+                                      >
+                                        <div className="text-xs font-medium truncate">
+                                          {timeOff.title}
+                                        </div>
+                                        <div className="text-xs">
+                                          {timeOff.is_all_day ? 'All day' : 
+                                            `${timeOff.start_time?.substring(0, 5)} - ${timeOff.end_time?.substring(0, 5)}`
+                                          }
+                                        </div>
+                                        <Badge className="text-xs bg-red-100 text-red-700 mt-1">
+                                          {timeOff.type.replace('_', ' ')}
+                                        </Badge>
+                                      </div>
+                                    ))}
+                                    
+                                    {/* Bookings */}
+                                    {dayBookings.length === 0 && timeOffForDay.length === 0 ? (
                                       <div className="text-center text-muted-foreground text-sm py-4">
                                         No appointments
                                       </div>
@@ -834,8 +897,72 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
             <div className="mt-8">
               <AppointmentCalendar 
                 appointments={appointments} 
+                timeOffPeriods={timeOffPeriods}
                 onSelectEvent={handleSelectAppointment}
+                onSelectTimeOff={handleTimeOffClick}
               />
+            </div>
+          )}
+
+          {/* Time Off Viewing Dialog (customers can view but not delete) */}
+          {selectedTimeOff && (
+            <div className="fixed inset-0 z-50">
+              <div className="fixed inset-0 bg-black/50" onClick={() => {
+                setSelectedTimeOff(null);
+              }} />
+              <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <CalendarOff className="h-5 w-5 text-red-600" />
+                  <h3 className="text-lg font-semibold">Service Unavailable</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Reason</p>
+                    <p className="font-medium">{selectedTimeOff.title}</p>
+                  </div>
+                  
+                  {selectedTimeOff.description && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Details</p>
+                      <p className="text-sm">{selectedTimeOff.description}</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="text-sm">
+                      {selectedTimeOff.start_date === selectedTimeOff.end_date ? (
+                        format(new Date(selectedTimeOff.start_date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')
+                      ) : (
+                        `${format(new Date(selectedTimeOff.start_date + 'T00:00:00'), 'MMM d')} - ${format(new Date(selectedTimeOff.end_date + 'T00:00:00'), 'MMM d, yyyy')}`
+                      )}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground">Time</p>
+                    <p className="text-sm">
+                      {selectedTimeOff.is_all_day ? 'All day' : 
+                        selectedTimeOff.start_time && selectedTimeOff.end_time ? 
+                          `${selectedTimeOff.start_time.substring(0, 5)} - ${selectedTimeOff.end_time.substring(0, 5)}` : 
+                          'All day'
+                      }
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                  <Button 
+                    onClick={() => {
+                      setSelectedTimeOff(null);
+                    }}
+                    className="w-full"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
