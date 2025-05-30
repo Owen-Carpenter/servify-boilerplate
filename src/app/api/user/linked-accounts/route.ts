@@ -55,7 +55,7 @@ export async function GET() {
     }
 
     // Check for OAuth providers
-    const oauthProviders = ['google', 'facebook', 'apple'];
+    const oauthProviders = ['google', 'facebook'];
     oauthProviders.forEach(provider => {
       const providerId = userMetadata[`${provider}_id`];
       if (providerId) {
