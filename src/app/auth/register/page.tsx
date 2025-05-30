@@ -30,7 +30,8 @@ import {
   AlertDescription, 
   AlertTitle 
 } from "@/components/ui/alert";
-import { CheckCircle, User, Mail, Phone, Lock, UserPlus, Github } from "lucide-react";
+import { CheckCircle, User, Mail, Phone, Lock, UserPlus } from "lucide-react";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
 // Register schema
 const registerSchema = z.object({
@@ -106,12 +107,6 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   }
-
-  const handleSocialLogin = async (provider: string) => {
-    setError(null);
-    // This would be implemented when setting up OAuth providers
-    alert(`${provider} login will be implemented with OAuth`);
-  };
 
   // If verification was successful, show success message
   if (verificationSuccess) {
@@ -237,31 +232,11 @@ export default function RegisterPage() {
             )}
             
             <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full backdrop-blur-sm bg-white/80 hover:bg-white/50 shadow-sm border-0 transition-all duration-200"
-                onClick={() => handleSocialLogin("Google")}
+              <OAuthButtons 
+                callbackUrl="/dashboard"
                 disabled={isLoading}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 488 512"
-                  className="h-4 w-4 mr-2 text-red-500"
-                  fill="currentColor"
-                >
-                  <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
-                </svg>
-                Sign Up with Google
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full backdrop-blur-sm bg-white/80 hover:bg-white/50 shadow-sm border-0 transition-all duration-200"
-                onClick={() => handleSocialLogin("GitHub")}
-                disabled={isLoading}
-              >
-                <Github className="mr-2 h-4 w-4" />
-                Sign Up with Github
-              </Button>
+                mode="signup"
+              />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white/50 backdrop-blur-sm px-2 text-muted-foreground">

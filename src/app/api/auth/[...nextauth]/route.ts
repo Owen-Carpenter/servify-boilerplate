@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
+import AppleProvider from "next-auth/providers/apple";
+import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
 
@@ -35,6 +36,12 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Initialize Supabase admin client for user creation
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
+
 // Create NextAuth handler with explicit exports
 const handler = NextAuth({
   // Authentication providers: OAuth and credentials
@@ -43,9 +50,20 @@ const handler = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+    AppleProvider({
+      clientId: process.env.APPLE_CLIENT_ID || "",
+      clientSecret: process.env.APPLE_CLIENT_SECRET || "",
+      // Apple requires additional configuration
+      authorization: {
+        params: {
+          scope: "name email",
+          response_mode: "form_post",
+        },
+      },
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID || "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       name: "Email/Password",
@@ -146,7 +164,172 @@ const handler = NextAuth({
   // Enable debug in development
   debug: process.env.NODE_ENV === "development",
   
+  events: {
+    async linkAccount({ user, account }) {
+      console.log("Account linked:", { 
+        userId: user.id, 
+        provider: account.provider, 
+        providerAccountId: account.providerAccountId 
+      });
+    },
+  },
+  
   callbacks: {
+    // Handle OAuth sign-in and user creation
+    async signIn({ user, account, profile }) {
+      // If it's an OAuth provider (not credentials), create user profile in Supabase
+      if (account?.provider && account.provider !== "credentials") {
+        try {
+          console.log("OAuth sign-in attempt:", { 
+            provider: account.provider, 
+            providerUserId: user.id, 
+            email: user.email 
+          });
+
+          // Check if user already exists in our users table by email
+          const { data: existingUser, error: fetchError } = await supabase
+            .from("users")
+            .select("id, name, email, phone, role")
+            .eq("email", user.email)
+            .single();
+
+          if (fetchError && fetchError.code !== 'PGRST116') {
+            console.error("Error checking existing user:", fetchError);
+            return false;
+          }
+
+          // If user doesn't exist, create them in Supabase Auth first, then in users table
+          if (!existingUser) {
+            console.log("Creating new OAuth user in Supabase Auth");
+            
+            try {
+              // Create user in Supabase Auth system first
+              const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                email: user.email!,
+                email_confirm: true, // Auto-confirm OAuth users
+                user_metadata: {
+                  name: user.name || profile?.name,
+                  avatar_url: user.image,
+                  provider: account.provider,
+                  provider_id: user.id
+                }
+              });
+
+              if (authError) {
+                console.error("Error creating user in Supabase Auth:", authError);
+                return false;
+              }
+
+              if (!authData.user) {
+                console.error("No user returned from Supabase Auth creation");
+                return false;
+              }
+
+              console.log("User created in Supabase Auth with ID:", authData.user.id);
+
+              // Now create the user profile in our users table using the Supabase auth user ID
+              const newProfile = {
+                id: authData.user.id, // Use Supabase auth user ID
+                name: user.name || profile?.name || user.email?.split('@')[0] || null,
+                email: user.email,
+                phone: null, // OAuth providers typically don't provide phone
+                role: "customer", // Default role
+              };
+              
+              console.log("New profile data:", newProfile);
+              
+              const { error: insertError } = await supabase
+                .from("users")
+                .insert(newProfile);
+                
+              if (insertError) {
+                console.error("Error creating OAuth user profile:", insertError);
+                return false;
+              } else {
+                console.log("OAuth user profile created successfully with ID:", authData.user.id);
+                // Update user object with the Supabase auth user ID and role for JWT
+                user.id = authData.user.id;
+                user.role = "customer";
+              }
+
+            } catch (authCreateError) {
+              console.error("Failed to create user in Supabase Auth:", authCreateError);
+              return false;
+            }
+          } else {
+            console.log("OAuth user already exists, linking account");
+            
+            try {
+              // User exists in our users table, check if they exist in Supabase Auth
+              const { data: authUser, error: authFetchError } = await supabaseAdmin.auth.admin.getUserById(existingUser.id);
+              
+              if (authFetchError || !authUser.user) {
+                console.log("User exists in users table but not in Supabase Auth, creating auth user");
+                
+                // Create the user in Supabase Auth to link the OAuth account
+                const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                  id: existingUser.id, // Use existing user ID to maintain consistency
+                  email: user.email!,
+                  email_confirm: true,
+                  user_metadata: {
+                    name: existingUser.name || user.name || profile?.name,
+                    avatar_url: user.image,
+                    provider: account.provider,
+                    provider_id: user.id
+                  }
+                });
+
+                if (authError) {
+                  console.error("Error creating auth user for linking:", authError);
+                  return false;
+                }
+                
+                console.log("Auth user created for account linking with ID:", authData.user?.id);
+              } else {
+                console.log("User exists in both systems, linking OAuth provider");
+                
+                // Update user metadata to include the new OAuth provider info
+                const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+                  existingUser.id,
+                  {
+                    user_metadata: {
+                      ...authUser.user.user_metadata,
+                      [`${account.provider}_id`]: user.id,
+                      avatar_url: user.image || authUser.user.user_metadata?.avatar_url,
+                      name: user.name || profile?.name || authUser.user.user_metadata?.name
+                    }
+                  }
+                );
+
+                if (updateError) {
+                  console.error("Error updating user metadata for account linking:", updateError);
+                  // Continue anyway, this is not critical
+                }
+              }
+              
+              // Update user object with existing profile data
+              user.id = existingUser.id;
+              user.role = existingUser.role;
+              user.phone = existingUser.phone;
+              
+              console.log("Account linking completed for user:", existingUser.id);
+              
+            } catch (linkingError) {
+              console.error("Error during account linking:", linkingError);
+              // If linking fails, still allow sign-in with existing user data
+              user.id = existingUser.id;
+              user.role = existingUser.role;
+              user.phone = existingUser.phone;
+            }
+          }
+        } catch (error) {
+          console.error("OAuth sign-in error:", error);
+          return false;
+        }
+      }
+      
+      return true;
+    },
     // Add role to JWT
     async jwt({ token, user }) {
       if (user) {

@@ -47,6 +47,61 @@ export async function GET() {
     
     if (error) {
       console.error("Error fetching user profile:", error);
+      
+      // If user doesn't exist (PGRST116), try to create a profile from session data
+      if (error.code === 'PGRST116') {
+        console.log("User profile not found in database, attempting to create from session data");
+        
+        try {
+          // Create user profile from session data
+          const newProfile = {
+            id: userId,
+            name: session.user.name || session.user.email?.split('@')[0] || null,
+            email: session.user.email,
+            phone: null,
+            role: "customer", // Default role
+          };
+          
+          const { data: createdUser, error: createError } = await supabase
+            .from("users")
+            .insert(newProfile)
+            .select("id, name, email, phone, role, created_at, updated_at")
+            .single();
+            
+          if (createError) {
+            console.error("Error creating user profile from session:", createError);
+            return NextResponse.json(
+              { success: false, message: "User profile not found and could not be created." },
+              { status: 404 }
+            );
+          }
+          
+          console.log("User profile created successfully from session data");
+          
+          // Return the newly created user data
+          return NextResponse.json({
+            success: true,
+            user: {
+              id: createdUser.id,
+              name: createdUser.name,
+              email: createdUser.email,
+              phone: createdUser.phone,
+              role: createdUser.role,
+              createdAt: createdUser.created_at,
+              updatedAt: createdUser.updated_at
+            }
+          });
+          
+        } catch (createError) {
+          console.error("Failed to create user profile from session:", createError);
+          return NextResponse.json(
+            { success: false, message: "User profile not found and could not be created." },
+            { status: 404 }
+          );
+        }
+      }
+      
+      // For other errors, return 500
       return NextResponse.json(
         { success: false, message: "Failed to fetch profile", error: error },
         { status: 500 }
@@ -56,7 +111,7 @@ export async function GET() {
     if (!user) {
       console.error("User not found in database");
       return NextResponse.json(
-        { success: false, message: "User not found" },
+        { success: false, message: "User profile not found. Please complete your profile setup." },
         { status: 404 }
       );
     }

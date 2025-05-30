@@ -45,17 +45,27 @@ export function Navigation() {
       if (status === "authenticated") {
         try {
           const response = await fetch("/api/user/profile");
+          
+          if (response.status === 404) {
+            // User profile doesn't exist yet (e.g., OAuth user without profile)
+            console.log("User profile not found - using session data");
+            return;
+          }
+          
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
+          
           const data = await response.json();
           if (data.success && data.user) {
             setUserProfile({
               name: data.user.name
             });
+            console.log("User profile loaded successfully");
           }
         } catch (error) {
           console.error("Error fetching user profile:", error);
+          // Don't throw the error, just use session data as fallback
         }
       }
     };
