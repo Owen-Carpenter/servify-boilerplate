@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkTimeOffConflict } from '@/lib/supabase-timeoff';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -74,6 +75,56 @@ export async function POST(request: Request) {
           message: `Cannot reschedule an appointment that is ${booking.status}` 
         },
         { status: 400 }
+      );
+    }
+    
+    // Get service details to determine duration for time off conflict check
+    const { data: serviceData, error: serviceError } = await supabase
+      .from('services')
+      .select('duration')
+      .eq('id', booking.service_id)
+      .single();
+    
+    let durationMinutes = 60; // Default duration
+    if (!serviceError && serviceData?.duration) {
+      // Parse duration string like "60 min" to get minutes
+      const durationMatch = serviceData.duration.match(/(\d+)/);
+      if (durationMatch) {
+        durationMinutes = parseInt(durationMatch[1], 10);
+      }
+    }
+    
+    // Convert appointmentTime from "9:00 AM" format to "09:00" format for time off check
+    const convertTo24Hour = (time12h: string): string => {
+      const [timeStr, period] = time12h.split(' ');
+      const [hours, minutes] = timeStr.split(':');
+      let hour24 = parseInt(hours, 10);
+      
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0;
+      }
+      
+      return `${hour24.toString().padStart(2, '0')}:${minutes}`;
+    };
+    
+    const time24h = convertTo24Hour(appointmentTime);
+    
+    // Check for time off conflicts
+    const hasTimeOffConflict = await checkTimeOffConflict(
+      appointmentDate,
+      time24h,
+      durationMinutes
+    );
+    
+    if (hasTimeOffConflict) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'The selected time conflicts with a blocked period. Please choose a different time.' 
+        },
+        { status: 409 }
       );
     }
     

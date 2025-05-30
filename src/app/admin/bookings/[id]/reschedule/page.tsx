@@ -13,6 +13,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageLoader } from "@/components/ui/page-loader";
 import { formatDateForDB, isSameDay as isSameDayUtil } from '@/lib/date-utils';
+import { getTimeOffPeriods, TimeOff } from '@/lib/supabase-timeoff';
 
 // All possible time slots
 const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"];
@@ -49,6 +50,7 @@ export default function AdminRescheduleAppointmentPage() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>(ALL_TIME_SLOTS);
   const [timeSlotDisplay, setTimeSlotDisplay] = useState<Record<string, { available: boolean; reason?: string }>>({});
   const [existingBookings, setExistingBookings] = useState<DbBooking[]>([]);
+  const [timeOffPeriods, setTimeOffPeriods] = useState<TimeOff[]>([]);
 
   // Helper function to parse time strings to minutes
   const parseTimeToMinutes = (timeStr: string) => {
@@ -83,6 +85,46 @@ export default function AdminRescheduleAppointmentPage() {
     return `${hours}:${mins.toString().padStart(2, '0')} ${period}`;
   };
 
+  // Check if a time slot conflicts with time off
+  const isTimeSlotBlockedByTimeOff = (timeSlot: string, date: Date, durationMinutes: number): { blocked: boolean; reason?: string } => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const timeOffForDate = timeOffPeriods.filter(timeOff => 
+      dateStr >= timeOff.start_date && dateStr <= timeOff.end_date
+    );
+
+    for (const timeOff of timeOffForDate) {
+      // If it's all day time off, block the entire day
+      if (timeOff.is_all_day) {
+        return {
+          blocked: true,
+          reason: `Unavailable due to ${timeOff.title}`
+        };
+      }
+
+      // Check time overlap for partial day time off
+      if (timeOff.start_time && timeOff.end_time) {
+        const timeSlotMinutes = parseTimeToMinutes(timeSlot);
+        const timeSlotEndMinutes = timeSlotMinutes + durationMinutes;
+        
+        const [timeOffStartHour, timeOffStartMin] = timeOff.start_time.split(':').map(Number);
+        const [timeOffEndHour, timeOffEndMin] = timeOff.end_time.split(':').map(Number);
+        
+        const timeOffStartMinutes = timeOffStartHour * 60 + timeOffStartMin;
+        const timeOffEndMinutes = timeOffEndHour * 60 + timeOffEndMin;
+
+        // Check if time slot overlaps with time off
+        if (!(timeSlotEndMinutes <= timeOffStartMinutes || timeSlotMinutes >= timeOffEndMinutes)) {
+          return {
+            blocked: true,
+            reason: `Conflicts with ${timeOff.title} (${formatMinutesToTimeDisplay(timeOffStartMinutes)} - ${formatMinutesToTimeDisplay(timeOffEndMinutes)})`
+          };
+        }
+      }
+    }
+
+    return { blocked: false };
+  };
+
   // Fetch all bookings when component mounts
   useEffect(() => {
     const fetchAllBookings = async () => {
@@ -95,12 +137,34 @@ export default function AdminRescheduleAppointmentPage() {
         setExistingBookings(data.bookings || []);
       } catch (error) {
         console.error('Error fetching bookings:', error);
-        // Fallback to empty bookings array
         setExistingBookings([]);
       }
     };
     
     fetchAllBookings();
+  }, []);
+
+  // Fetch time off periods
+  useEffect(() => {
+    const fetchTimeOffPeriods = async () => {
+      try {
+        // Get time off for the next month to cover potential reschedule dates
+        const today = new Date();
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        
+        const fromDate = format(today, 'yyyy-MM-dd');
+        const toDate = format(nextMonth, 'yyyy-MM-dd');
+        
+        const timeOff = await getTimeOffPeriods(fromDate, toDate);
+        setTimeOffPeriods(timeOff);
+      } catch (error) {
+        console.error('Error fetching time off periods:', error);
+        setTimeOffPeriods([]);
+      }
+    };
+
+    fetchTimeOffPeriods();
   }, []);
 
   useEffect(() => {
@@ -151,7 +215,6 @@ export default function AdminRescheduleAppointmentPage() {
     
     // Get bookings for the selected date, excluding the current appointment
     const dateBookings = existingBookings.filter(booking => {
-      // Use standardized date comparison
       return isSameDayUtil(booking.appointment_date, selectedDate) && 
         booking.id !== appointment.id &&
         (booking.status === 'confirmed' || booking.status === 'pending');
@@ -160,11 +223,20 @@ export default function AdminRescheduleAppointmentPage() {
     // Create a display object for each time slot
     const timeDisplay: Record<string, { available: boolean; reason?: string }> = {};
     
-    // Check each time slot against existing bookings
+    // Check each time slot against existing bookings and time off
     const available = ALL_TIME_SLOTS.filter(timeSlot => {
-      // Check if this time slot overlaps with any existing booking
+      // First check time off conflicts
+      const timeOffCheck = isTimeSlotBlockedByTimeOff(timeSlot, selectedDate, appointmentDurationMinutes);
+      if (timeOffCheck.blocked) {
+        timeDisplay[timeSlot] = {
+          available: false,
+          reason: timeOffCheck.reason
+        };
+        return false;
+      }
+
+      // Then check booking conflicts
       const overlappingBooking = dateBookings.find(booking => {
-        // Assume a default duration of 60 minutes if not specified
         const bookingDurationMin = 60;
         
         return isTimeOverlapping(
@@ -175,9 +247,8 @@ export default function AdminRescheduleAppointmentPage() {
         );
       });
       
-      // Store availability and reason
       if (overlappingBooking) {
-        const bookingDurationMin = 60; // Default duration for demonstration
+        const bookingDurationMin = 60;
         const bookingTimeStart = parseTimeToMinutes(overlappingBooking.appointment_time);
         const bookingTimeEnd = bookingTimeStart + bookingDurationMin;
         
@@ -187,7 +258,6 @@ export default function AdminRescheduleAppointmentPage() {
         };
         return false;
       } else {
-        // Special case: If this is the original date and time of the appointment, it should be available
         const isOriginalDateAndTime = 
           format(new Date(appointment.date), "yyyy-MM-dd") === formattedDate && 
           appointment.time === timeSlot;
@@ -207,8 +277,6 @@ export default function AdminRescheduleAppointmentPage() {
     setTimeSlotDisplay(timeDisplay);
     setAvailableTimeSlots(available);
     
-    // If the currently selected time is no longer available, reset it
-    // But only if it's not the original appointment time on the original date
     const isOriginalDateAndTime = 
       format(new Date(appointment.date), "yyyy-MM-dd") === formattedDate && 
       appointment.time === selectedTime;
@@ -216,7 +284,7 @@ export default function AdminRescheduleAppointmentPage() {
     if (selectedTime && !available.includes(selectedTime) && !isOriginalDateAndTime) {
       setSelectedTime("");
     }
-  }, [selectedDate, appointment, selectedTime, existingBookings]);
+  }, [selectedDate, appointment, selectedTime, existingBookings, timeOffPeriods]);
 
   const handleBack = () => {
     router.back();
