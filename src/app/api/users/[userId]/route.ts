@@ -8,11 +8,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // Get the user ID from the URL params
-    const userId = params.userId;
+    const { userId } = await params;
     
     if (!userId) {
       return NextResponse.json({ 

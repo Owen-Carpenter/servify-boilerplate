@@ -14,9 +14,9 @@ import { Footer } from "@/components/ui/footer";
 import { EmailDialog } from "@/components/admin/EmailDialog";
 import { PageLoader } from "@/components/ui/page-loader";
 
-export default function AdminBookingDetailPage({ params }: { params: { id: string } }) {
+export default function AdminBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap the params Promise using React.use()
-  const unwrappedParams = React.use(params as unknown as Promise<{ id: string }>);
+  const unwrappedParams = React.use(params);
   const bookingId = unwrappedParams.id;
   
   const { data: session, status } = useSession();

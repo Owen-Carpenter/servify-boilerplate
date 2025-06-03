@@ -118,7 +118,7 @@ export default function AppointmentDetailsPage() {
               <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
               <h2 className="text-2xl font-semibold mb-2">Appointment Not Found</h2>
               <p className="text-muted-foreground mb-6">
-                We couldn't find the appointment you're looking for. It may have been removed or the link is incorrect.
+                We couldn&apos;t find the appointment you&apos;re looking for. It may have been removed or the link is incorrect.
               </p>
               <Button onClick={() => router.push('/dashboard')}>Return to Dashboard</Button>
             </CardContent>
@@ -182,7 +182,7 @@ export default function AppointmentDetailsPage() {
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 <AlertTitle className="text-amber-800">Pending Confirmation</AlertTitle>
                 <AlertDescription className="text-amber-700">
-                  This appointment is waiting for confirmation. You'll receive notification once it's confirmed.
+                  This appointment is waiting for confirmation. You&apos;ll receive notification once it&apos;s confirmed.
                 </AlertDescription>
               </Alert>
             )}

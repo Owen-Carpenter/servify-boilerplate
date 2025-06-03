@@ -102,11 +102,50 @@ export async function GET(req: Request) {
       );
     }
 
+    // Check if booking is pending and if Stripe payment is actually complete
+    let finalBooking = booking;
+    if (booking.status === 'pending' && booking.payment_intent) {
+      console.log(`Booking ${booking.id} is pending, checking Stripe payment status...`);
+      
+      try {
+        // Check payment status directly
+        const checkResponse = await stripe.checkout.sessions.retrieve(booking.payment_intent);
+        const isPaymentComplete = checkResponse.payment_status === 'paid' || checkResponse.status === 'complete';
+        
+        if (isPaymentComplete) {
+          console.log(`Payment is complete for booking ${booking.id}, updating status...`);
+          const amountPaid = checkResponse.amount_total ? checkResponse.amount_total / 100 : booking.amount_paid;
+          
+          // Update the booking to confirmed status
+          const { data: updatedBooking, error: updateError } = await supabase
+            .from('bookings')
+            .update({
+              status: 'confirmed',
+              payment_status: 'paid',
+              amount_paid: amountPaid,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', booking.id)
+            .select('*')
+            .single();
+          
+          if (!updateError && updatedBooking) {
+            finalBooking = updatedBooking;
+            console.log(`Successfully updated booking ${booking.id} to confirmed status`);
+          } else {
+            console.error(`Error updating booking ${booking.id}:`, updateError);
+          }
+        }
+      } catch (checkError) {
+        console.error(`Error checking Stripe payment status for booking ${booking.id}:`, checkError);
+      }
+    }
+
     // Return the booking details
     return NextResponse.json({
       success: true,
       booking: {
-        ...booking,
+        ...finalBooking,
         stripe_session: {
           id: stripeSession.id,
           status: stripeSession.status,

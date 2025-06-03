@@ -13,7 +13,6 @@ import {
   Column,
   Hr,
   Button,
-  Link,
 } from '@react-email/components';
 
 interface PaymentReceiptProps {

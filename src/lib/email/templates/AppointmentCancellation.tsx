@@ -13,7 +13,6 @@ import {
   Column,
   Hr,
   Button,
-  Link,
 } from '@react-email/components';
 
 interface AppointmentCancellationProps {
@@ -81,7 +80,7 @@ export const AppointmentCancellation: React.FC<AppointmentCancellationProps> = (
               </Section>
               
               <Text className="text-gray-600 text-sm">
-                If you didn't request this cancellation or have any questions, please contact our customer service team immediately.
+                If you didn&apos;t request this cancellation or have any questions, please contact our customer service team immediately.
               </Text>
               
               <Hr className="my-4 border-gray-200" />

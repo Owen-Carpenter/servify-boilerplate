@@ -3,9 +3,8 @@ import ServiceDetailClient from "./ServiceDetailClient";
 import { notFound } from "next/navigation";
 
 // This is a Server Component
-export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
-  // Ensure params is resolved before using it
-  const id = params?.id;
+export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   
   // Fetch the service from Supabase
   const service = await getServiceById(id);

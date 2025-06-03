@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -30,7 +30,7 @@ import {
   AlertDescription, 
   AlertTitle 
 } from "@/components/ui/alert";
-import { CheckCircle, User, Mail, Phone, Lock, UserPlus } from "lucide-react";
+import { CheckCircle, User, Mail, Phone, Lock, UserPlus, Loader2 } from "lucide-react";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
 // Register schema
@@ -58,7 +58,7 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -365,5 +365,13 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<Loader2 className="animate-spin h-16 w-16" />}>
+      <RegisterContent />
+    </Suspense>
   );
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/auth';
 import { Card, CardHeader, CardContent, CardDescription, CardTitle, CardFooter } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircleIcon, XCircleIcon, Loader2Icon } from 'lucide-react';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -104,5 +104,22 @@ export default function VerifyPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="py-8 flex flex-col items-center">
+            <Loader2Icon className="h-12 w-12 text-primary animate-spin mb-4" />
+            <p>Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   );
 } 

@@ -24,9 +24,9 @@ interface UserProfile {
   created_at: string;
 }
 
-export default function CustomerBookingsPage({ params }: { params: { id: string } }) {
+export default function CustomerBookingsPage({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap the params Promise using React.use()
-  const unwrappedParams = React.use(params as unknown as Promise<{ id: string }>);
+  const unwrappedParams = React.use(params);
   const customerId = unwrappedParams.id;
   
   const { data: session, status } = useSession();

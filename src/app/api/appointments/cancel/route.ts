@@ -46,6 +46,10 @@ export async function POST(req: Request) {
       .eq('id', userId || booking.user_id)
       .single();
     
+    if (userError) {
+      console.error('Error fetching user:', userError);
+    }
+    
     // 4. Send cancellation email
     if (userData?.email) {
       try {

@@ -1,30 +1,110 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SessionProvider, useSession } from "next-auth/react";
+import { Session } from "next-auth";
 import { Footer } from "@/components/ui/footer";
 
 interface BookingDetails {
   id: string;
-  service: string;
+  user_id: string;
+  service_id: string;
   service_name: string;
-  date: string;
   appointment_date: string;
-  time: string;
   appointment_time: string;
-  amount: string;
+  status: string;
+  payment_status: string;
+  payment_intent: string;
   amount_paid: number;
-  status?: string;
-  user_id?: string;
+  created_at: string;
+  updated_at: string;
+  // Legacy fields for backward compatibility
+  service?: string;
+  date?: string;
+  time?: string;
+  amount?: string;
   stripe_session?: {
     payment_status?: string;
     status?: string;
   };
+}
+
+// Helper function to send payment receipt email via API
+async function sendPaymentReceiptEmailAPI(booking: BookingDetails, session: Session | null) {
+  try {
+    // Ensure we have the minimum required data before attempting to send
+    const email = session?.user?.email;
+    const name = session?.user?.name || 'Customer';
+    const bookingId = booking.id;
+    const serviceName = booking.service_name || booking.service;
+    const date = booking.appointment_date || booking.date;
+    const time = booking.appointment_time || booking.time;
+    const amount = booking.amount_paid 
+      ? `$${booking.amount_paid}` 
+      : (booking.amount || '0');
+
+    // Log the data being sent for debugging
+    console.log('Sending receipt email with data:', {
+      email,
+      name,
+      bookingId,
+      serviceName,
+      date,
+      time,
+      amount,
+      hasEmail: !!email,
+      hasBookingId: !!bookingId,
+      hasServiceName: !!serviceName,
+      hasDate: !!date,
+      hasTime: !!time
+    });
+
+    // Check for missing critical data
+    if (!email) {
+      console.log('Cannot send receipt email: No email address available');
+      return;
+    }
+
+    if (!bookingId || !serviceName || !date || !time) {
+      console.log('Cannot send receipt email: Missing booking details', {
+        bookingId: !!bookingId,
+        serviceName: !!serviceName,
+        date: !!date,
+        time: !!time
+      });
+      return;
+    }
+
+    const response = await fetch('/api/email/send-receipt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        name,
+        bookingId,
+        serviceName,
+        date,
+        time,
+        amount
+      }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      console.log('Payment receipt email sent successfully');
+    } else {
+      console.error('Failed to send payment receipt email:', result.error);
+    }
+  } catch (error) {
+    console.error('Error sending payment receipt email:', error);
+  }
 }
 
 function BookingSuccessPageContent() {
@@ -33,7 +113,7 @@ function BookingSuccessPageContent() {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
+  const [emailSent] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -70,12 +150,41 @@ function BookingSuccessPageContent() {
         if (data.success && data.booking) {
           setBookingDetails(data.booking);
           
-          // Send email receipt if booking is confirmed or payment is complete on Stripe's side
+          // Check if payment is confirmed either in our database or on Stripe's side
           const stripePaymentComplete = data.booking.stripe_session?.payment_status === 'paid' || 
                                         data.booking.stripe_session?.status === 'complete';
-                                        
+          const bookingConfirmed = data.booking.status === 'confirmed';
+          
+          // If Stripe shows payment complete but our database still shows pending, 
+          // try to update it immediately
+          if (stripePaymentComplete && !bookingConfirmed) {
+            console.log("Payment is complete on Stripe but booking is still pending, attempting to update...");
+            try {
+              // Force update the specific booking
+              await fetch('/api/bookings/updatePendingStatus', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: session?.user?.id }),
+              });
+              
+              // Refetch booking details after update attempt
+              const updatedResponse = await fetch(`/api/bookings/details?sessionId=${sessionId}`, {
+                credentials: "include"
+              });
+              const updatedData = await updatedResponse.json();
+              if (updatedData.success && updatedData.booking) {
+                setBookingDetails(updatedData.booking);
+              }
+            } catch (updateError) {
+              console.error("Error updating booking status:", updateError);
+            }
+          }
+          
+          // Send email receipt if booking is confirmed or payment is complete
           if ((data.booking.status === 'confirmed' || stripePaymentComplete) && !emailSent) {
-            await sendPaymentReceiptEmail(data.booking);
+            await sendPaymentReceiptEmailAPI(data.booking, session);
           }
         } else {
           setError(data.message || "Failed to retrieve booking details");
@@ -91,8 +200,7 @@ function BookingSuccessPageContent() {
     if (sessionId) {
       fetchBookingDetails();
       
-      // Polling to check for booking status updates
-      // This is helpful when the webhook hasn't processed yet but user sees success page
+      // Enhanced polling to check for booking status updates
       const statusCheckInterval = setInterval(async () => {
         try {
           if (!sessionId) return;
@@ -105,79 +213,51 @@ function BookingSuccessPageContent() {
           if (data.success && data.booking) {
             setBookingDetails(data.booking);
             
-            // If booking is confirmed OR payment is complete on Stripe's side, clear the interval and send email
+            // Check if booking is confirmed OR payment is complete on Stripe's side
             const stripePaymentComplete = data.booking.stripe_session?.payment_status === 'paid' || 
                                           data.booking.stripe_session?.status === 'complete';
+            const bookingConfirmed = data.booking.status === 'confirmed';
                                           
-            if (data.booking.status === 'confirmed' || stripePaymentComplete) {
+            if (bookingConfirmed || stripePaymentComplete) {
               clearInterval(statusCheckInterval);
+              
+              // If payment is complete but booking not confirmed, try one more update
+              if (stripePaymentComplete && !bookingConfirmed) {
+                try {
+                  await fetch('/api/bookings/updatePendingStatus', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: session?.user?.id }),
+                  });
+                } catch (updateError) {
+                  console.error("Error in final update attempt:", updateError);
+                }
+              }
               
               // Send email receipt if not sent already
               if (!emailSent) {
-                await sendPaymentReceiptEmail(data.booking);
+                await sendPaymentReceiptEmailAPI(data.booking, session);
               }
             }
           }
         } catch (error) {
           console.error("Error polling booking status:", error);
         }
-      }, 5000); // Check every 5 seconds
+      }, 3000); // Check every 3 seconds instead of 5
       
-      // Clean up interval
+      // Clear interval after 30 seconds to avoid infinite polling
+      setTimeout(() => {
+        clearInterval(statusCheckInterval);
+      }, 30000);
+      
+      // Clean up interval on component unmount
       return () => clearInterval(statusCheckInterval);
     } else {
       setLoading(false);
     }
-  }, [sessionId, emailSent]);
-
-  // Function to send payment receipt email
-  const sendPaymentReceiptEmail = async (booking: BookingDetails) => {
-    try {
-      // Get user details from session or booking
-      const userId = booking.user_id || session?.user?.id;
-      
-      if (!userId) {
-        console.error("No user ID available to send email");
-        return;
-      }
-      
-      // Get user email from API
-      const userResponse = await fetch(`/api/users/${userId}`);
-      const userData = await userResponse.json();
-      
-      if (!userData.success || !userData.user?.email) {
-        console.error("Could not get user email for receipt");
-        return;
-      }
-      
-      // Send the email using our API
-      const response = await fetch('/api/emails/payment-receipt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userData.user.email,
-          name: userData.user.name || 'Valued Customer',
-          bookingId: booking.id,
-          serviceName: booking.service_name || booking.service,
-          date: new Date(booking.appointment_date || booking.date).toLocaleDateString(),
-          time: booking.appointment_time || booking.time,
-          amount: `$${(booking.amount_paid || 0).toFixed(2)}`,
-        }),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        setEmailSent(true);
-        console.log("Payment receipt email sent successfully");
-      } else {
-        console.error("Failed to send payment receipt email:", result.message);
-      }
-    } catch (error) {
-      console.error("Error sending payment receipt email:", error);
-    }
-  };
+  }, [sessionId, emailSent, session]);
 
   // Handle loading state
   if (loading) {
@@ -413,7 +493,13 @@ export default function BookingSuccessPage() {
     <SessionProvider>
       <div className="min-h-screen flex flex-col">
         <div className="flex-grow">
-          <BookingSuccessPageContent />
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <Loader2 className="animate-spin h-16 w-16" />
+            </div>
+          }>
+            <BookingSuccessPageContent />
+          </Suspense>
         </div>
         <Footer />
       </div>

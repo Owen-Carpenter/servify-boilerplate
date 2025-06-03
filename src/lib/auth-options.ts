@@ -1,22 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import { supabase } from "./auth";
 
-// Extend the session type to include our custom fields
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id?: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role?: string;
-      phone?: string;
-      createdAt?: string;
-      updatedAt?: string;
-    }
-  }
-}
-
 export const authOptions: NextAuthOptions = {
   providers: [],
   callbacks: {
@@ -36,8 +20,9 @@ export const authOptions: NextAuthOptions = {
           session.user.email = userData.email;
           session.user.phone = userData.phone;
           session.user.role = userData.role;
-          session.user.createdAt = userData.created_at;
-          session.user.updatedAt = userData.updated_at;
+          // Note: createdAt and updatedAt are not available in the Session type
+          // session.user.createdAt = userData.created_at;
+          // session.user.updatedAt = userData.updated_at;
         }
       }
       return session;

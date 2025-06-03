@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown } from "lucide-react";
+import { Clock, DollarSign, ChevronRight, Filter, ArrowUpDown, Loader2 } from "lucide-react";
 import { initScrollAnimations } from "@/lib/scroll-animations";
 import { Service } from "@/lib/services";
 import { getServices } from "@/lib/supabase-services";
@@ -36,7 +36,7 @@ const faqItems = [
   }
 ];
 
-export default function ServicesPage() {
+function ServicesContent() {
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams?.get('category') || "all";
   
@@ -307,5 +307,17 @@ export default function ServicesPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-16 w-16" />
+      </div>
+    }>
+      <ServicesContent />
+    </Suspense>
   );
 } 

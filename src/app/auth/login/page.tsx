@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -20,10 +20,10 @@ import {
   AlertDescription, 
   AlertTitle 
 } from "@/components/ui/alert";
-import { CheckCircle, Mail, Lock, LogIn } from "lucide-react";
+import { CheckCircle, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -208,5 +208,17 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin h-16 w-16" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 } 
