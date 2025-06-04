@@ -127,9 +127,11 @@
   body {
     @apply bg-background text-foreground;
     overflow-x: hidden;
+    width: 100%;
   }
   html {
     overflow-x: hidden;
+    width: 100%;
   }
 }
 
@@ -170,7 +172,8 @@
 .wave-shape svg {
   position: relative;
   display: block;
-  width: calc(150% + 1.3px);
+  width: calc(150% + 1.3px) !important;
+  max-width: none !important;
   height: 80px;
   animation: waveAnimation 15s linear infinite;
 }
@@ -192,7 +195,8 @@
 .wave-shape-top svg {
   position: relative;
   display: block;
-  width: calc(150% + 1.3px);
+  width: calc(150% + 1.3px) !important;
+  max-width: none !important;
   height: 80px;
   animation: waveAnimation 15s linear infinite reverse;
 }
@@ -750,8 +754,22 @@
   overflow-x: hidden;
 }
 
-/* Ensure all containers don't exceed viewport */
-* {
+/* Targeted container constraints - exclude wave shapes */
+.content-container,
+.content-container *:not(.wave-shape):not(.wave-shape *):not(.wave-shape-top):not(.wave-shape-top *) {
+  box-sizing: border-box;
+}
+
+/* Ensure form elements and containers don't exceed viewport */
+input, textarea, select, form {
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Mobile-specific overflow prevention */
+@media (max-width: 768px) {
+  /* Ensure mobile-specific absolute elements stay contained */
+  .absolute:not(.wave-shape *):not(.wave-shape-top *) {
+    max-width: 100vw;
+  }
 }
