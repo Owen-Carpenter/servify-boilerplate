@@ -126,6 +126,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+  html {
+    overflow-x: hidden;
   }
 }
 
@@ -623,7 +627,8 @@
 }
 
 .content-container {
-  @apply px-4 md:px-6 max-w-[1400px] mx-auto;
+  @apply px-4 md:px-6 max-w-[1400px] mx-auto w-full;
+  box-sizing: border-box;
 }
 
 /* Calendar Styles */
@@ -738,4 +743,15 @@
 
 .rbc-agenda-event-cell {
   font-weight: 500;
+}
+
+/* Prevent horizontal scroll */
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+/* Ensure all containers don't exceed viewport */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
 }
