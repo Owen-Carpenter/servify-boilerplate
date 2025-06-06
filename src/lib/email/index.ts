@@ -12,7 +12,7 @@ if (typeof window === 'undefined') {
 }
 
 // Base URL for application links
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
 
 /**
  * Send a payment receipt email

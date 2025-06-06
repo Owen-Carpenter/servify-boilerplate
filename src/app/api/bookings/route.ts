@@ -46,10 +46,10 @@ export async function POST(req: Request) {
       apiVersion: "2025-03-31.basil",
     });
     
-    // Get the host from the request
-    const host = req.headers.get("host") || "localhost:3000";
+    // Build the correct base URL for the application
+    const host = req.headers.get("host") || "servify-boilerplate.vercel.app";
     const protocol = host.includes("localhost") ? "http" : "https";
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || `${protocol}://${host}`;
     
     // Create a Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({

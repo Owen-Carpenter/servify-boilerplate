@@ -126,8 +126,8 @@ export async function POST(req: Request) {
 }
 
 async function createNewPaymentSession(booking: SupabaseBooking, service: Service): Promise<string> {
-  // Get the host from environment or default to localhost
-  const host = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // Get the host from environment or headers
+  const host = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
   
   // Create a new Stripe checkout session
   const stripeSession = await stripe.checkout.sessions.create({

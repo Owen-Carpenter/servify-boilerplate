@@ -345,17 +345,26 @@ const handler = NextAuth({
     },
     // Handle redirects after sign-in
     async redirect({ url, baseUrl }) {
-      // If the URL is already absolute (starts with http/https), use it
-      if (url.startsWith('http')) return url;
+      // Ensure we're using the production URL
+      const productionBaseUrl = process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
       
-      // If it's a relative path, join it with the base URL
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // If the URL is already absolute (starts with http/https), use it
+      if (url.startsWith('http')) {
+        // If it's pointing to localhost, redirect to production equivalent
+        if (url.includes('localhost:3000')) {
+          return url.replace('http://localhost:3000', productionBaseUrl);
+        }
+        return url;
+      }
+      
+      // If it's a relative path, join it with the production base URL
+      if (url.startsWith('/')) return `${productionBaseUrl}${url}`;
       
       // Default redirect to services page after successful sign-in
-      if (url === baseUrl) return `${baseUrl}/services`;
+      if (url === baseUrl) return `${productionBaseUrl}/services`;
       
-      // Default fallback - return to the base URL
-      return baseUrl;
+      // Default fallback - return to the production base URL
+      return productionBaseUrl;
     },
   },
   

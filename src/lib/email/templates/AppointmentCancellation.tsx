@@ -30,7 +30,7 @@ export const AppointmentCancellation: React.FC<AppointmentCancellationProps> = (
   serviceName = 'Premium Service',
   date = 'January 1, 2024',
   time = '10:00 AM',
-  baseUrl = 'http://localhost:3000',
+  baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app',
 }) => {
   const previewText = `Your appointment for ${serviceName} has been cancelled`;
 
