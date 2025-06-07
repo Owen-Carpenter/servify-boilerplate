@@ -270,28 +270,30 @@ function ServicesContent() {
           </div>
           
           {/* FAQ Section */}
-          <div className="mt-20 bg-white/10 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-lg mx-4 sm:mx-0 w-full max-w-full overflow-hidden">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6 md:mb-8 text-center text-white px-2">Frequently Asked Questions</h2>
-            
-            <div className="w-full max-w-4xl mx-auto">
-              <Accordion type="single" collapsible className="w-full space-y-2">
-                {faqItems.map((item, index) => (
-                  <AccordionItem 
-                    key={index} 
-                    value={`item-${index}`}
-                    className="border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm overflow-hidden"
-                  >
-                    <AccordionTrigger className="text-white font-medium text-left hover:text-accent transition-colors duration-200 text-sm sm:text-base px-4 py-3 sm:px-6 sm:py-4 [&>svg]:flex-shrink-0 [&>svg]:ml-2 hover:bg-white/10 data-[state=open]:bg-white/10">
-                      <span className="text-left leading-relaxed pr-2">{item.question}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="text-white/80 text-sm sm:text-base px-4 pb-3 sm:px-6 sm:pb-4 leading-relaxed">
-                      <div className="pt-2 border-t border-white/10">
-                        {item.answer}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+          <div className="mt-20 w-full max-w-full overflow-hidden">
+            <div className="bg-white/10 backdrop-blur-sm p-4 sm:p-6 md:p-8 rounded-lg mx-4 sm:mx-6 lg:mx-auto max-w-6xl">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-6 md:mb-8 text-center text-white px-2">Frequently Asked Questions</h2>
+              
+              <div className="w-full max-w-4xl mx-auto">
+                <Accordion type="single" collapsible className="w-full space-y-2">
+                  {faqItems.map((item, index) => (
+                    <AccordionItem 
+                      key={index} 
+                      value={`item-${index}`}
+                      className="border border-white/20 rounded-lg bg-white/5 backdrop-blur-sm overflow-hidden"
+                    >
+                      <AccordionTrigger className="text-white font-medium text-left hover:text-accent transition-colors duration-200 text-sm sm:text-base px-4 py-3 sm:px-6 sm:py-4 [&>svg]:flex-shrink-0 [&>svg]:ml-2 hover:bg-white/10 data-[state=open]:bg-white/10">
+                        <span className="text-left leading-relaxed pr-2">{item.question}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-white/80 text-sm sm:text-base px-4 pb-3 sm:px-6 sm:pb-4 leading-relaxed">
+                        <div className="pt-2 border-t border-white/10">
+                          {item.answer}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
             </div>
           </div>
           
