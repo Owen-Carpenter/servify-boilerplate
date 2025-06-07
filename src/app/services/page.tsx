@@ -132,33 +132,33 @@ function ServicesContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="gradient-bg pt-32 pb-20 flex-grow">
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
+      <main className="gradient-bg pt-32 pb-20 flex-grow overflow-x-hidden">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
-          <div className="absolute top-1/4 left-1/3 w-72 h-72 rounded-full bg-white blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300"></div>
+          <div className="absolute top-1/4 left-1/3 w-72 h-72 rounded-full bg-white blur-3xl animate-pulse max-md:w-40 max-md:h-40"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300 max-md:w-32 max-md:h-32"></div>
         </div>
         
         <div className="content-container relative z-10">
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold mb-3 gradient-text">Our Services</h1>
-            <p className="text-white/80 max-w-2xl mx-auto">
+          <div className="mb-12 text-center px-4">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 gradient-text">Our Services</h1>
+            <p className="text-white/80 max-w-2xl mx-auto text-sm md:text-base">
               Browse through our range of professional services and book your appointment today.
             </p>
           </div>
 
           {/* Filtering Options */}
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-8">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-8 mx-4 sm:mx-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
               <div className="flex items-center">
                 <Filter className="w-5 h-5 text-white mr-2" />
                 <h2 className="text-lg text-white font-medium">Filter Services</h2>
               </div>
               
-              <div className="flex items-center">
+              <div className="flex items-center w-full sm:w-auto">
                 <ArrowUpDown className="w-4 h-4 text-white mr-2" />
                 <select 
-                  className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none"
+                  className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none w-full sm:w-auto min-w-0"
                   value={sortOption}
                   onChange={handleSortChange}
                   style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
@@ -179,7 +179,7 @@ function ServicesContent() {
                   ${activeCategory === "all" 
                     ? "bg-white/20 backdrop-blur-md text-white border-white/20"
                     : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
-                  } transition-all duration-300
+                  } transition-all duration-300 text-xs sm:text-sm
                 `}
                 size="sm"
               >
@@ -194,7 +194,7 @@ function ServicesContent() {
                     ${activeCategory === category 
                       ? "bg-white/20 backdrop-blur-md text-white border-white/20"
                       : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
-                    } transition-all duration-300
+                    } transition-all duration-300 text-xs sm:text-sm
                   `}
                   size="sm"
                 >
@@ -205,28 +205,28 @@ function ServicesContent() {
           </div>
 
           {/* Services Grid - SIMPLIFIED ANIMATIONS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-4 sm:px-0">
             {loading ? (
-              <div className="col-span-3 flex justify-center items-center py-20">
+              <div className="col-span-full flex justify-center items-center py-20">
                 <div className="text-white text-lg">Loading services...</div>
               </div>
             ) : filteredServices.length > 0 ? (
               filteredServices.map((service, index) => (
-                <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300">
+                <Link href={`/services/${service.id}`} key={service.id} className="transition-transform hover:scale-[1.02] duration-300 w-full">
                   <Card className="h-full overflow-hidden transition-all duration-300
                     border border-white/20 shadow-xl
                     bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md
-                    hover:shadow-[0_10px_40px_rgba(255,255,255,0.15)] hover:border-white/30 relative group">
-                    <div className="absolute inset-0 flex items-center justify-center text-[250px] font-bold opacity-[0.15] pointer-events-none select-none z-0 animate-float-slow bg-clip-text text-transparent bg-gradient-to-br from-white to-white/30" style={{ '--rotation': `${(index % 3) - 1}deg` } as React.CSSProperties}>
+                    hover:shadow-[0_10px_40px_rgba(255,255,255,0.15)] hover:border-white/30 relative group w-full">
+                    <div className="absolute inset-0 flex items-center justify-center text-[150px] sm:text-[250px] font-bold opacity-[0.15] pointer-events-none select-none z-0 animate-float-slow bg-clip-text text-transparent bg-gradient-to-br from-white to-white/30" style={{ '--rotation': `${(index % 3) - 1}deg` } as React.CSSProperties}>
                       {(index + 1).toString().padStart(2, '0')}
                     </div>
                     <CardHeader className="pb-2 relative z-10">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-xl text-primary font-bold group-hover:text-primary/80 transition-colors">{service.title}</CardTitle>
-                          <CardDescription className="mt-1 text-white/80">{service.details}</CardDescription>
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg sm:text-xl text-primary font-bold group-hover:text-primary/80 transition-colors truncate">{service.title}</CardTitle>
+                          <CardDescription className="mt-1 text-white/80 text-sm line-clamp-2">{service.details}</CardDescription>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white">
+                        <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white whitespace-nowrap flex-shrink-0">
                           {formatCategoryName(service.category)}
                         </span>
                       </div>
@@ -234,27 +234,27 @@ function ServicesContent() {
                     <CardContent className="relative z-10">
                       <div className="flex justify-between text-sm text-white/70 mt-2">
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1 text-white/90" />
-                          <span>{service.time}</span>
+                          <Clock className="h-4 w-4 mr-1 text-white/90 flex-shrink-0" />
+                          <span className="truncate">{service.time}</span>
                         </div>
                         <div className="flex items-center font-medium">
-                          <DollarSign className="h-4 w-4 mr-1 text-accent group-hover:text-accent/80 transition-colors" />
+                          <DollarSign className="h-4 w-4 mr-1 text-accent group-hover:text-accent/80 transition-colors flex-shrink-0" />
                           <span className="text-accent group-hover:text-accent/80 transition-colors">{service.price}</span>
                         </div>
                       </div>
                     </CardContent>
                     <CardFooter className="border-t border-white/10 pt-4 relative z-10">
                       <Button className="w-full bg-primary hover:bg-primary/90 text-white 
-                        backdrop-blur-sm transition-all duration-200 group-hover:shadow-lg group-hover:scale-[1.02]">
+                        backdrop-blur-sm transition-all duration-200 group-hover:shadow-lg group-hover:scale-[1.02] text-sm">
                         <span>Book Now</span>
-                        <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                       </Button>
                     </CardFooter>
                   </Card>
                 </Link>
               ))
             ) : (
-              <div className="col-span-3 text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg">
+              <div className="col-span-full text-center py-12 bg-white/10 backdrop-blur-sm rounded-lg mx-4 sm:mx-0">
                 <p className="text-white text-lg">No services found for the selected category.</p>
                 <Button 
                   variant="outline" 
@@ -268,8 +268,8 @@ function ServicesContent() {
           </div>
           
           {/* FAQ Section */}
-          <div className="mt-20 bg-white/10 backdrop-blur-sm p-8 rounded-lg">
-            <h2 className="text-3xl font-bold mb-8 text-center text-white">Frequently Asked Questions</h2>
+          <div className="mt-20 bg-white/10 backdrop-blur-sm p-4 sm:p-8 rounded-lg mx-4 sm:mx-0">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-white">Frequently Asked Questions</h2>
             
             <Accordion type="single" collapsible className="w-full max-w-3xl mx-auto">
               {faqItems.map((item, index) => (
@@ -278,10 +278,10 @@ function ServicesContent() {
                   value={`item-${index}`}
                   className="border-b border-white/20 last:border-0"
                 >
-                  <AccordionTrigger className="text-white font-medium text-left hover:text-accent transition-colors duration-200">
+                  <AccordionTrigger className="text-white font-medium text-left hover:text-accent transition-colors duration-200 text-sm sm:text-base">
                     {item.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-white/80">
+                  <AccordionContent className="text-white/80 text-sm sm:text-base">
                     {item.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -290,9 +290,9 @@ function ServicesContent() {
           </div>
           
           {/* Contact CTA */}
-          <div className="mt-20 text-center">
-            <h2 className="text-3xl font-bold mb-4 text-white">Need Help Choosing a Service?</h2>
-            <p className="max-w-xl mx-auto text-white/80 mb-8">
+          <div className="mt-20 text-center px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-white">Need Help Choosing a Service?</h2>
+            <p className="max-w-xl mx-auto text-white/80 mb-8 text-sm sm:text-base">
               Our experts are ready to help you find the perfect service for your needs.
             </p>
             <Button 

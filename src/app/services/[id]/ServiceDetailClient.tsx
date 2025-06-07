@@ -417,11 +417,11 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
   };
 
   return (
-    <main className="gradient-bg pt-24 pb-20 min-h-screen">
+    <main className="gradient-bg pt-24 pb-20 min-h-screen overflow-x-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-72 h-72 rounded-full bg-white blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300"></div>
+        <div className="absolute top-1/4 left-1/3 w-72 h-72 rounded-full bg-white blur-3xl animate-pulse max-md:w-40 max-md:h-40"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full bg-white blur-3xl animate-pulse delay-300 max-md:w-32 max-md:h-32"></div>
       </div>
 
       <div className="content-container relative z-10">
@@ -437,7 +437,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
         <div className="max-w-6xl mx-auto">
           {/* Service Title */}
           <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 gradient-text inline-block">{service.title}</h1>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 gradient-text inline-block px-4">{service.title}</h1>
             <div className="flex justify-center items-center">
               <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
                 {formatCategoryName(service.category)}
@@ -445,33 +445,33 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Service Details */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 order-2 lg:order-1">
               <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
+                  <CardTitle className="text-xl md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
                     About This Service
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-gray-700 leading-relaxed">{service.details}</p>
+                  <p className="text-gray-700 leading-relaxed text-sm md:text-base">{service.details}</p>
                   
-                  <div className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 text-primary mb-2">
                         <Clock size={18} />
-                        <span className="font-medium">Duration</span>
+                        <span className="font-medium text-sm md:text-base">Duration</span>
                       </div>
-                      <p>{service.time}</p>
+                      <p className="text-sm md:text-base">{service.time}</p>
                     </div>
                     
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 text-primary mb-2">
                         <DollarSign size={18} />
-                        <span className="font-medium">Price</span>
+                        <span className="font-medium text-sm md:text-base">Price</span>
                       </div>
-                      <p className="text-xl font-bold">${service.price.toFixed(2)}</p>
+                      <p className="text-lg md:text-xl font-bold">${service.price.toFixed(2)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -479,7 +479,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
 
               <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
+                  <CardTitle className="text-lg md:text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
                     What&apos;s Included
                   </CardTitle>
                 </CardHeader>
@@ -487,19 +487,19 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                   <ul className="space-y-3">
                     <li className="flex items-start gap-2">
                       <Check size={18} className="text-green-500 mt-1 flex-shrink-0" />
-                      <span>Professional consultation with our experts</span>
+                      <span className="text-sm md:text-base">Professional consultation with our experts</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check size={18} className="text-green-500 mt-1 flex-shrink-0" />
-                      <span>Personalized service tailored to your needs</span>
+                      <span className="text-sm md:text-base">Personalized service tailored to your needs</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check size={18} className="text-green-500 mt-1 flex-shrink-0" />
-                      <span>Follow-up support after your appointment</span>
+                      <span className="text-sm md:text-base">Follow-up support after your appointment</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check size={18} className="text-green-500 mt-1 flex-shrink-0" />
-                      <span>Access to premium resources and tools</span>
+                      <span className="text-sm md:text-base">Access to premium resources and tools</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -507,7 +507,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
 
               <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
+                  <CardTitle className="text-lg md:text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-indigo-600">
                     Location
                   </CardTitle>
                 </CardHeader>
@@ -515,9 +515,9 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                   <div className="flex items-start gap-2 mb-3">
                     <MapPin size={18} className="text-primary mt-1 flex-shrink-0" />
                     <div>
-                      <p className="font-medium">Servify Headquarters</p>
-                      <p className="text-gray-600">123 Service Lane, Suite 456</p>
-                      <p className="text-gray-600">Business District, NY 10001</p>
+                      <p className="font-medium text-sm md:text-base">Servify Headquarters</p>
+                      <p className="text-gray-600 text-sm md:text-base">123 Service Lane, Suite 456</p>
+                      <p className="text-gray-600 text-sm md:text-base">Business District, NY 10001</p>
                     </div>
                   </div>
                   <div className="bg-gray-100 h-32 rounded-lg mt-4 flex items-center justify-center">
@@ -528,16 +528,16 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
             </div>
 
             {/* Booking Form */}
-            <div>
-              <Card className="bg-white/95 backdrop-blur-sm sticky top-24 border-0 shadow-lg">
+            <div className="order-1 lg:order-2">
+              <Card className="bg-white/95 backdrop-blur-sm lg:sticky lg:top-24 border-0 shadow-lg overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-primary/10 to-indigo-600/10 border-b">
-                  <CardTitle className="text-2xl text-center">Book Your Appointment</CardTitle>
-                  <CardDescription className="text-center">Select your preferred date and time</CardDescription>
+                  <CardTitle className="text-xl md:text-2xl text-center">Book Your Appointment</CardTitle>
+                  <CardDescription className="text-center text-sm md:text-base">Select your preferred date and time</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">Select Date</label>
-                    <div className="border rounded-md overflow-hidden">
+                    <div className="border rounded-md overflow-hidden w-full">
                       <DatePicker
                         selected={selectedDate}
                         onChange={(date: Date | null) => {
@@ -549,7 +549,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                         minDate={new Date()}
                         maxDate={addMonths(new Date(), 1)}
                         inline
-                        calendarClassName="!border-0 !shadow-none"
+                        calendarClassName="!border-0 !shadow-none !w-full"
                         dayClassName={(date: Date) => {
                           if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
                             return "!bg-primary !text-white rounded-full";
@@ -593,7 +593,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                     {selectedDate && (
                       <div className="text-sm text-gray-500 mt-2 flex items-center justify-center gap-2">
                         <CalendarIcon className="h-4 w-4" />
-                        <span>
+                        <span className="text-center">
                           {format(selectedDate, "EEEE, MMMM d, yyyy")}
                         </span>
                       </div>
@@ -696,7 +696,7 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
                         <CalendarIcon size={16} className="text-primary" />
                         Your Selection
                       </h3>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 text-sm md:text-base">
                         {selectedDate.toLocaleDateString('en-US', { 
                           weekday: 'long', 
                           month: 'long', 
@@ -737,15 +737,36 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
           font-family: inherit !important;
           border: none !important;
           width: 100% !important;
+          box-sizing: border-box !important;
         }
         .react-datepicker__month-container {
           width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .react-datepicker__month {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .react-datepicker__week {
+          display: flex !important;
+          justify-content: space-between !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
         }
         .react-datepicker__day {
-          margin: 0.2rem !important;
-          width: 2.5rem !important;
-          line-height: 2.5rem !important;
+          margin: 0.1rem !important;
+          width: calc((100% - 1.4rem) / 7) !important;
+          max-width: 2.5rem !important;
+          min-width: 1.8rem !important;
+          height: 2rem !important;
+          line-height: 2rem !important;
           border-radius: 9999px !important;
+          box-sizing: border-box !important;
+          flex-shrink: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 0.875rem !important;
         }
         .react-datepicker__day:hover {
           background-color: #f3f4f6 !important;
@@ -763,12 +784,38 @@ export default function ServiceDetailClient({ service }: ServiceDetailClientProp
         }
         .react-datepicker__day-names {
           margin-top: 0.5rem !important;
+          display: flex !important;
+          justify-content: space-between !important;
+          width: 100% !important;
         }
         .react-datepicker__day-name {
-          margin: 0.2rem !important;
-          width: 2.5rem !important;
-          line-height: 2.5rem !important;
+          margin: 0.1rem !important;
+          width: calc((100% - 1.4rem) / 7) !important;
+          max-width: 2.5rem !important;
+          min-width: 1.8rem !important;
+          height: 2rem !important;
+          line-height: 2rem !important;
           color: #6b7280 !important;
+          font-size: 0.75rem !important;
+          flex-shrink: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+        
+        @media (max-width: 640px) {
+          .react-datepicker__day {
+            font-size: 0.75rem !important;
+            height: 1.75rem !important;
+            line-height: 1.75rem !important;
+            min-width: 1.5rem !important;
+          }
+          .react-datepicker__day-name {
+            font-size: 0.6rem !important;
+            height: 1.75rem !important;
+            line-height: 1.75rem !important;
+            min-width: 1.5rem !important;
+          }
         }
       `}</style>
     </main>
