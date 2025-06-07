@@ -773,3 +773,67 @@ input, textarea, select, form {
     max-width: 100vw;
   }
 }
+
+/* Additional horizontal scroll prevention */
+html {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure all container elements respect viewport width */
+.gradient-bg {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Prevent any grid items from exceeding container width */
+.grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Ensure card elements don't overflow */
+[class*="Card"] {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent text from creating horizontal overflow */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Ensure all flex containers don't overflow */
+.flex {
+  min-width: 0;
+}
+
+.flex > * {
+  min-width: 0;
+}
+
+/* Additional safeguards for services page */
+main * {
+  box-sizing: border-box;
+}
+
+/* Prevent absolute positioned blur elements from causing scroll on very small screens */
+@media (max-width: 480px) {
+  .absolute.animate-pulse {
+    transform: scale(0.7);
+  }
+}
