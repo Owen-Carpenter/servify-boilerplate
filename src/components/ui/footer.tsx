@@ -65,13 +65,6 @@ export function Footer() {
         </div>
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
           <p className="mb-4">© {new Date().getFullYear()} Servify. All rights reserved.</p>
-          <div className="flex justify-center space-x-4">
-            <Link href="/support" className="text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Support</Link>
-            <span className="text-gray-600">•</span>
-            <Link href="/#contact" className="text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">Contact</Link>
-            <span className="text-gray-600">•</span>
-            <Link href="/faq" className="text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-y-[-2px] transition-transform inline-block">FAQ</Link>
-          </div>
         </div>
       </div>
     </footer>
