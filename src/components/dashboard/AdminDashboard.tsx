@@ -169,9 +169,22 @@ export default function AdminDashboard() {
         
         // Fetch all bookings (admin only)
         const allBookings = await getAllBookings();
-        setBookings(allBookings);
         
-        // Count bookings by status
+        // Automatically mark past confirmed appointments as completed (frontend only for display)
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        const processedBookings = allBookings.map(booking => {
+          // If booking is confirmed and the appointment date has passed, mark as completed for display
+          if (booking.status === 'confirmed' && booking.appointment_date < todayStr) {
+            return { ...booking, status: 'completed' as const };
+          }
+          return booking;
+        });
+        
+        setBookings(processedBookings);
+        
+        // Count bookings by status based on processed bookings
         const counts = {
           pending: 0,
           confirmed: 0,
@@ -179,7 +192,7 @@ export default function AdminDashboard() {
           cancelled: 0
         };
         
-        allBookings.forEach(booking => {
+        processedBookings.forEach(booking => {
           if (counts.hasOwnProperty(booking.status)) {
             counts[booking.status as keyof typeof counts]++;
           }
@@ -188,7 +201,7 @@ export default function AdminDashboard() {
         setBookingCounts(counts);
         
         // Convert bookings to appointments format for the calendar
-        const appointmentsData: Appointment[] = allBookings.map(booking => ({
+        const appointmentsData: Appointment[] = processedBookings.map(booking => ({
           id: booking.id,
           serviceId: booking.service_id,
           serviceName: booking.service_name,

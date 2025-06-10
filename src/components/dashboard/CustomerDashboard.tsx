@@ -9,7 +9,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Calendar, Clock, BadgeCheck, AlertTriangle, X, User as UserIcon, Pencil, Phone, ChevronLeft, ChevronRight, CalendarOff } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
-import { getBookingCountsByStatus, getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
+import { getUserBookings, type SupabaseBooking } from "@/lib/supabase-bookings";
 import { useSession } from "next-auth/react";
 import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
 import { PendingAppointments } from "@/components/dashboard/PendingAppointments";
@@ -180,14 +180,39 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
         
         // Fetch user bookings
         const userBookings = await getUserBookings(authenticatedUserId);
-        setBookings(userBookings);
         
-        // Get booking counts
-        const counts = await getBookingCountsByStatus(authenticatedUserId);
+        // Automatically mark past confirmed appointments as completed (frontend only for display)
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        const processedBookings = userBookings.map(booking => {
+          // If booking is confirmed and the appointment date has passed, mark as completed for display
+          if (booking.status === 'confirmed' && booking.appointment_date < todayStr) {
+            return { ...booking, status: 'completed' as const };
+          }
+          return booking;
+        });
+        
+        setBookings(processedBookings);
+        
+        // Get booking counts based on the processed bookings
+        const counts = {
+          pending: 0,
+          confirmed: 0,
+          completed: 0,
+          cancelled: 0
+        };
+        
+        processedBookings.forEach(booking => {
+          if (counts.hasOwnProperty(booking.status)) {
+            counts[booking.status as keyof typeof counts]++;
+          }
+        });
+        
         setBookingCounts(counts);
         
         // Convert bookings to appointments format for components that need it
-        const appointmentsData: Appointment[] = userBookings.map(booking => ({
+        const appointmentsData: Appointment[] = processedBookings.map(booking => ({
           id: booking.id,
           serviceId: booking.service_id,
           serviceName: booking.service_name,
