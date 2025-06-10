@@ -59,7 +59,6 @@ export function Footer() {
               <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Privacy Policy</Link></li>
               <li><Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Terms of Service</Link></li>
               <li><Link href="/cookie-policy" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">Cookie Policy</Link></li>
-              <li><Link href="/gdpr" className="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transition-transform inline-block">GDPR</Link></li>
             </ul>
           </div>
         </div>
