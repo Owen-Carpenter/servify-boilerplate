@@ -26,6 +26,14 @@ const formatCategoryName = (category: string) => {
 export default function HomePage() {
   const [popularServices, setPopularServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [contactMessage, setContactMessage] = useState({ type: '', text: '' });
 
   // Initialize scroll animations
   useEffect(() => {
@@ -50,6 +58,49 @@ export default function HomePage() {
     
     fetchPopularServices();
   }, []);
+
+  // Handle contact form input changes
+  const handleContactInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle contact form submission
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingContact(true);
+    setContactMessage({ type: '', text: '' });
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contactForm),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setContactMessage({ type: 'success', text: result.message });
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+      } else {
+        setContactMessage({ type: 'error', text: result.message });
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      setContactMessage({ 
+        type: 'error', 
+        text: 'Failed to send message. Please try again later.' 
+      });
+    } finally {
+      setIsSubmittingContact(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
@@ -465,7 +516,16 @@ export default function HomePage() {
             <div className="lg:col-span-2 reveal-right">
               <Card className="bg-white/10 backdrop-blur-sm border-white/10 hover-glow">
                 <CardContent className="p-6 md:p-8">
-                  <form className="space-y-6">
+                  {contactMessage.text && (
+                    <div className={`mb-6 p-4 rounded-lg ${
+                      contactMessage.type === 'success' 
+                        ? 'bg-green-500/20 border border-green-500/30 text-green-100' 
+                        : 'bg-red-500/20 border border-red-500/30 text-red-100'
+                    }`}>
+                      {contactMessage.text}
+                    </div>
+                  )}
+                  <form className="space-y-6" onSubmit={handleContactSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
@@ -474,8 +534,11 @@ export default function HomePage() {
                         <input
                           type="text"
                           id="name"
+                          name="name"
                           className="w-full p-3 border-0 bg-white/20 rounded-md focus:ring-2 focus:ring-white text-white placeholder:text-white/50 hover-bright text-sm"
                           placeholder="Your name"
+                          value={contactForm.name}
+                          onChange={handleContactInputChange}
                         />
                       </div>
                       <div>
@@ -485,8 +548,11 @@ export default function HomePage() {
                         <input
                           type="email"
                           id="email"
+                          name="email"
                           className="w-full p-3 border-0 bg-white/20 rounded-md focus:ring-2 focus:ring-white text-white placeholder:text-white/50 hover-bright text-sm"
                           placeholder="Your email"
+                          value={contactForm.email}
+                          onChange={handleContactInputChange}
                         />
                       </div>
                     </div>
@@ -497,8 +563,11 @@ export default function HomePage() {
                       <input
                         type="text"
                         id="subject"
+                        name="subject"
                         className="w-full p-3 border-0 bg-white/20 rounded-md focus:ring-2 focus:ring-white text-white placeholder:text-white/50 hover-bright text-sm"
                         placeholder="Subject"
+                        value={contactForm.subject}
+                        onChange={handleContactInputChange}
                       />
                     </div>
                     <div>
@@ -507,16 +576,20 @@ export default function HomePage() {
                       </label>
                       <textarea
                         id="message"
+                        name="message"
                         rows={4}
                         className="w-full p-3 border-0 bg-white/20 rounded-md focus:ring-2 focus:ring-white text-white placeholder:text-white/50 hover-bright text-sm resize-none"
                         placeholder="Your message"
+                        value={contactForm.message}
+                        onChange={handleContactInputChange}
                       ></textarea>
                     </div>
                     <Button 
                       className="w-full servify-btn-primary"
                       type="submit"
+                      disabled={isSubmittingContact}
                     >
-                      Send Message
+                      {isSubmittingContact ? 'Sending...' : 'Send Message'}
                     </Button>
                   </form>
                 </CardContent>
