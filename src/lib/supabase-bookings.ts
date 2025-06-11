@@ -302,8 +302,23 @@ export async function updateBookingDateTime(
  */
 export async function getAllBookings(): Promise<SupabaseBooking[]> {
   try {
+    // For admin operations, we need to use the service role key to bypass RLS
+    // Check if we're in a server environment where we can use service role
+    let adminSupabase = supabase;
+    
+    if (typeof window === 'undefined') {
+      // Server-side: Use service role key if available
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      
+      if (serviceKey && serviceKey !== process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        adminSupabase = createClient(supabaseUrl, serviceKey);
+      }
+    }
+    
     // Use a joined query to get bookings with customer information
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from('bookings')
       .select(`
         *,

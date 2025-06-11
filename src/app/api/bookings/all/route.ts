@@ -8,11 +8,16 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET() {
   try {
-    // Fetch all bookings from Supabase
-    // Note: In a production app, you might want to add pagination or filtering
+    // Fetch all bookings with customer information from Supabase
     const { data: bookings, error } = await supabase
       .from('bookings')
-      .select('*')
+      .select(`
+        *,
+        users:user_id (
+          name,
+          email
+        )
+      `)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -23,9 +28,20 @@ export async function GET() {
       }, { status: 500 });
     }
     
+    // Transform the data to include customer info in the main booking object
+    const bookingsWithCustomerInfo = (bookings || []).map(booking => {
+      const customerData = booking.users || {};
+      return {
+        ...booking,
+        customer_name: customerData.name || null,
+        customer_email: customerData.email || null,
+        users: undefined // Remove the nested users object
+      };
+    });
+    
     return NextResponse.json({ 
       success: true, 
-      bookings: bookings || [] 
+      bookings: bookingsWithCustomerInfo 
     });
   } catch (error) {
     console.error("Error retrieving bookings:", error);

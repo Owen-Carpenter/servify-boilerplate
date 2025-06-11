@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 import { Footer } from "@/components/ui/footer";
-import { getAllBookings, SupabaseBooking } from "@/lib/supabase-bookings";
+import { SupabaseBooking } from "@/lib/supabase-bookings";
 import { AppointmentCalendar } from "@/components/appointment/AppointmentCalendar";
 import { type Appointment } from "@/lib/appointments";
 import { Input } from "@/components/ui/input";
@@ -167,14 +167,21 @@ export default function AdminDashboard() {
       try {
         setIsLoading(true);
         
-        // Fetch all bookings (admin only)
-        const allBookings = await getAllBookings();
+        // Fetch all bookings via API route for better consistency across environments
+        const response = await fetch('/api/bookings/all');
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to fetch bookings');
+        }
+        
+        const allBookings = result.bookings || [];
         
         // Automatically mark past confirmed appointments as completed (frontend only for display)
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
         
-        const processedBookings = allBookings.map(booking => {
+        const processedBookings = allBookings.map((booking: SupabaseBooking) => {
           // If booking is confirmed and the appointment date has passed, mark as completed for display
           if (booking.status === 'confirmed' && booking.appointment_date < todayStr) {
             return { ...booking, status: 'completed' as const };
@@ -192,7 +199,7 @@ export default function AdminDashboard() {
           cancelled: 0
         };
         
-        processedBookings.forEach(booking => {
+        processedBookings.forEach((booking: SupabaseBooking) => {
           if (counts.hasOwnProperty(booking.status)) {
             counts[booking.status as keyof typeof counts]++;
           }
@@ -201,7 +208,7 @@ export default function AdminDashboard() {
         setBookingCounts(counts);
         
         // Convert bookings to appointments format for the calendar
-        const appointmentsData: Appointment[] = processedBookings.map(booking => ({
+        const appointmentsData: Appointment[] = processedBookings.map((booking: SupabaseBooking) => ({
           id: booking.id,
           serviceId: booking.service_id,
           serviceName: booking.service_name,
