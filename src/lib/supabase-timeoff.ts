@@ -26,29 +26,20 @@ export async function getTimeOffPeriods(
   toDate?: string
 ): Promise<TimeOff[]> {
   try {
-    let query = supabase
-      .from('time_off')
-      .select('*')
-      .order('start_date', { ascending: true });
+    const params = new URLSearchParams();
+    if (fromDate) params.append('fromDate', fromDate);
+    if (toDate) params.append('toDate', toDate);
 
-    if (fromDate && toDate) {
-      // Get time off that overlaps with the date range
-      query = query
-        .lte('start_date', toDate)
-        .gte('end_date', fromDate);
-    } else if (fromDate) {
-      // Get time off from a specific date onwards
-      query = query.gte('end_date', fromDate);
-    }
+    const response = await fetch(`/api/timeoff?${params.toString()}`);
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching time off periods:", error);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error fetching time off periods:", errorData.message);
       return [];
     }
 
-    return data as TimeOff[];
+    const result = await response.json();
+    return result.success ? result.data : [];
   } catch (error) {
     console.error("Error in getTimeOffPeriods:", error);
     return [];
@@ -64,28 +55,22 @@ export async function createTimeOff(
   timeOff: Omit<TimeOff, 'id' | 'created_at' | 'updated_at' | 'created_by'>
 ): Promise<TimeOff | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.error("No authenticated user found");
+    const response = await fetch('/api/timeoff', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(timeOff),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error creating time off:", errorData.message);
       return null;
     }
 
-    const { data, error } = await supabase
-      .from('time_off')
-      .insert({
-        ...timeOff,
-        created_by: user.id,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating time off:", error);
-      return null;
-    }
-
-    return data as TimeOff;
+    const result = await response.json();
+    return result.success ? result.data : null;
   } catch (error) {
     console.error("Error in createTimeOff:", error);
     return null;
@@ -103,19 +88,22 @@ export async function updateTimeOff(
   updates: Partial<Omit<TimeOff, 'id' | 'created_at' | 'updated_at' | 'created_by'>>
 ): Promise<TimeOff | null> {
   try {
-    const { data, error } = await supabase
-      .from('time_off')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+    const response = await fetch('/api/timeoff', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id, ...updates }),
+    });
 
-    if (error) {
-      console.error("Error updating time off:", error);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error updating time off:", errorData.message);
       return null;
     }
 
-    return data as TimeOff;
+    const result = await response.json();
+    return result.success ? result.data : null;
   } catch (error) {
     console.error("Error in updateTimeOff:", error);
     return null;
@@ -129,13 +117,13 @@ export async function updateTimeOff(
  */
 export async function deleteTimeOff(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('time_off')
-      .delete()
-      .eq('id', id);
+    const response = await fetch(`/api/timeoff?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
 
-    if (error) {
-      console.error("Error deleting time off:", error);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error deleting time off:", errorData.message);
       return false;
     }
 
