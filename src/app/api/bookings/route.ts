@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { formatDateForDB } from "@/lib/date-utils";
+import { getBookingSuccessUrl, getBookingCancelUrl } from "@/lib/utils/url";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -47,10 +48,7 @@ export async function POST(req: Request) {
       apiVersion: "2025-03-31.basil",
     });
     
-    // Build the correct base URL for the application
-    const host = req.headers.get("host") || "servify-boilerplate.vercel.app";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+    // Use environment variable for consistent URL generation
     
     // Create a Stripe checkout session
     const stripeSession = await stripe.checkout.sessions.create({
@@ -77,8 +75,8 @@ export async function POST(req: Request) {
         time: bookingData.time || "",
       },
       mode: "payment",
-      success_url: `${baseUrl}/booking/success?sessionId={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/booking/cancel?sessionId={CHECKOUT_SESSION_ID}`,
+      success_url: getBookingSuccessUrl(),
+      cancel_url: getBookingCancelUrl(),
     });
     
     // First check if user exists in our users table

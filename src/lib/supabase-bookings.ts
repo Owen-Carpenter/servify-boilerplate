@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/auth";
+import { getBaseUrl } from "@/lib/utils/url";
 
 export interface SupabaseBooking {
   id: string;
@@ -93,7 +94,7 @@ export async function getUserBookings(userId?: string): Promise<SupabaseBooking[
     if (typeof window === 'undefined' && bookings.some(b => b.status === 'pending')) {
       try {
         // Make an API call to update any pending bookings
-        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/bookings/updatePendingStatus`, {
+        await fetch(`${getBaseUrl()}/api/bookings/updatePendingStatus`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

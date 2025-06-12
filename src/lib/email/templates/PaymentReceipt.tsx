@@ -32,7 +32,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
   date = 'January 1, 2024',
   time = '10:00 AM',
   amount = '$99.00',
-  baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app',
+      baseUrl,
 }) => {
   const previewText = `Your payment receipt for ${serviceName}`;
 

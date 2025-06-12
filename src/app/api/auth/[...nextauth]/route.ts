@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient } from "@supabase/supabase-js";
+import { getBaseUrl, getAuthRedirectUrl } from "@/lib/utils/url";
 
 // Type extensions for role-based access
 declare module "next-auth" {
@@ -345,26 +346,26 @@ const handler = NextAuth({
     },
     // Handle redirects after sign-in
     async redirect({ url, baseUrl }) {
-      // Ensure we're using the production URL
-      const productionBaseUrl = process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
+      // Get the configured base URL from environment variables
+      const appBaseUrl = getBaseUrl();
       
       // If the URL is already absolute (starts with http/https), use it
       if (url.startsWith('http')) {
         // If it's pointing to localhost, redirect to production equivalent
         if (url.includes('localhost:3000')) {
-          return url.replace('http://localhost:3000', productionBaseUrl);
+          return url.replace('http://localhost:3000', appBaseUrl);
         }
         return url;
       }
       
-      // If it's a relative path, join it with the production base URL
-      if (url.startsWith('/')) return `${productionBaseUrl}${url}`;
+      // If it's a relative path, join it with the configured base URL
+      if (url.startsWith('/')) return `${appBaseUrl}${url}`;
       
       // Default redirect to services page after successful sign-in
-      if (url === baseUrl) return `${productionBaseUrl}/services`;
+      if (url === baseUrl) return getAuthRedirectUrl('/services');
       
-      // Default fallback - return to the production base URL
-      return productionBaseUrl;
+      // Default fallback - return to the configured base URL
+      return appBaseUrl;
     },
   },
   

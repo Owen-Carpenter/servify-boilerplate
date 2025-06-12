@@ -4,6 +4,7 @@ import PaymentReceipt from './templates/PaymentReceipt';
 import AppointmentCancellation from './templates/AppointmentCancellation';
 import React from 'react';
 import 'server-only';
+import { getBaseUrl } from '@/lib/utils/url';
 
 // Initialize Resend with API key - only works on server
 let resend: Resend | null = null;
@@ -12,7 +13,7 @@ if (typeof window === 'undefined') {
 }
 
 // Base URL for application links
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
+const BASE_URL = getBaseUrl();
 
 /**
  * Send a payment receipt email

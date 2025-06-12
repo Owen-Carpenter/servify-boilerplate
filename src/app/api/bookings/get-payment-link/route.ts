@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
 import Stripe from "stripe";
 import { SupabaseBooking } from '@/lib/supabase-bookings';
+import { getBookingSuccessUrl, getBookingCancelUrl } from "@/lib/utils/url";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -126,8 +127,6 @@ export async function POST(req: Request) {
 }
 
 async function createNewPaymentSession(booking: SupabaseBooking, service: Service): Promise<string> {
-  // Get the host from environment or headers
-  const host = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://servify-boilerplate.vercel.app';
   
   // Create a new Stripe checkout session
   const stripeSession = await stripe.checkout.sessions.create({
@@ -154,8 +153,8 @@ async function createNewPaymentSession(booking: SupabaseBooking, service: Servic
       time: booking.appointment_time,
     },
     mode: "payment",
-    success_url: `${host}/booking/success?sessionId={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${host}/booking/cancel?sessionId={CHECKOUT_SESSION_ID}`,
+    success_url: getBookingSuccessUrl(),
+    cancel_url: getBookingCancelUrl(),
   });
   
   // Update the booking with the new payment intent
