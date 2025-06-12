@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from 'resend';
+import { getSenderEmail } from '@/lib/utils/email';
 
 // Initialize Resend with API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -28,8 +29,8 @@ export async function POST(request: Request) {
     
     // Get the contact email from environment variables
     const contactEmail = process.env.CONTACT_EMAIL || 'owen.carpenter.work@gmail.com';
-    // Use Resend's default domain which doesn't require verification
-    const fromEmail = 'noreply@servify-booking.shop';
+    // Get the sender email from environment variables with proper validation
+    const fromEmail = getSenderEmail();
     
     // Format the email content with HTML
     const htmlContent = `

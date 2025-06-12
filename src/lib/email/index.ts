@@ -5,6 +5,7 @@ import AppointmentCancellation from './templates/AppointmentCancellation';
 import React from 'react';
 import 'server-only';
 import { getBaseUrl } from '@/lib/utils/url';
+import { getFormattedSender } from '@/lib/utils/email';
 
 // Initialize Resend with API key - only works on server
 let resend: Resend | null = null;
@@ -56,7 +57,7 @@ export async function sendPaymentReceiptEmail({
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'Servify <noreply@servify-booking.shop>',
+      from: getFormattedSender('Servify'),
       to: email,
       subject: `Payment Receipt for ${serviceName}`,
       html
@@ -112,7 +113,7 @@ export async function sendAppointmentCancellationEmail({
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'Servify <noreply@servify-booking.shop>',
+      from: getFormattedSender('Servify'),
       to: email,
       subject: `Your appointment for ${serviceName} has been cancelled`,
       html

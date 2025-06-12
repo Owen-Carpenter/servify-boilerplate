@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import { Resend } from 'resend';
+import { getSenderEmail } from '@/lib/utils/email';
 
 // Initialize Resend with API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -37,12 +38,8 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
     
-    // Always use Resend's verified domain for sending
-    // Don't use EMAIL_FROM if it's an unverified domain like gmail.com
-    const envFromEmail = process.env.EMAIL_FROM;
-    const fromEmail = (envFromEmail && !envFromEmail.includes('gmail.com') && !envFromEmail.includes('yahoo.com') && !envFromEmail.includes('hotmail.com')) 
-      ? envFromEmail 
-      : 'noreply@servify-booking.shop';
+    // Get the sender email from environment variables with proper validation
+    const fromEmail = getSenderEmail();
     
     // Use the sender's name from the session
     const fromName = session.user.name || 'Service Admin';
