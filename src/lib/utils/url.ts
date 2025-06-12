@@ -17,7 +17,7 @@ export function getBaseUrl(): string {
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-    'https://servify-boilerplate.vercel.app' // Fallback
+    'https://www.servify-booking.shop' // Fallback
   );
 }
 
