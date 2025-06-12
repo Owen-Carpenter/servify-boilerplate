@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -11,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function GET(req: Request) {
   try {
     // Get the current session
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     // Debug logging
     console.log("Details Session state:", {

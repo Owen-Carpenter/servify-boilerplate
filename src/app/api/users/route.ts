@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -10,7 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function GET(request: Request) {
   try {
     // Get the current session to check if user is authenticated and is an admin
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     if (!session?.user) {
       return NextResponse.json({

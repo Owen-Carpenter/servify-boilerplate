@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import { Resend } from 'resend';
 
 // Initialize Resend with API key
@@ -8,7 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: Request) {
   try {
     // Get the current session to check if user is authenticated and is an admin
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     if (!session?.user) {
       return NextResponse.json({
@@ -17,13 +18,13 @@ export async function POST(request: Request) {
       }, { status: 401 });
     }
     
-    // In a production app, we'd check if the user has admin role
-    // if (session.user.role !== 'admin') {
-    //   return NextResponse.json({
-    //     success: false,
-    //     message: "Forbidden: Only admins can send emails."
-    //   }, { status: 403 });
-    // }
+    // Check if the user has admin role
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        message: "Forbidden: Only admins can send emails."
+      }, { status: 403 });
+    }
     
     // Parse the request body
     const { to, subject, message, customerName } = await request.json();
@@ -36,13 +37,18 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
     
-    // Get the from email from environment variables
-    const fromEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+    // Always use Resend's verified domain for sending
+    // Don't use EMAIL_FROM if it's an unverified domain like gmail.com
+    const envFromEmail = process.env.EMAIL_FROM;
+    const fromEmail = (envFromEmail && !envFromEmail.includes('gmail.com') && !envFromEmail.includes('yahoo.com') && !envFromEmail.includes('hotmail.com')) 
+      ? envFromEmail 
+      : 'onboarding@resend.dev';
     
     // Use the sender's name from the session
     const fromName = session.user.name || 'Service Admin';
     
-    // Format the email content with HTML
+    // Format the email content with HTML - include admin's actual email in the content
+    const adminEmail = session.user.email;
     const htmlContent = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Message from ${fromName}</h2>
@@ -50,19 +56,25 @@ export async function POST(request: Request) {
         <div style="padding: 20px; background-color: #f9f9f9; border-radius: 5px; margin: 20px 0;">
           ${message.replace(/\n/g, '<br/>')}
         </div>
+        ${adminEmail ? `<p style="color: #666; font-size: 14px; margin-top: 20px;">
+          <strong>Reply to:</strong> <a href="mailto:${adminEmail}" style="color: #007bff;">${adminEmail}</a>
+        </p>` : ''}
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
           This email was sent from the service management platform.
         </p>
       </div>
     `;
     
-    // Send the email using Resend
-    const { data, error } = await resend.emails.send({
+    // Send the email using Resend with reply-to for better customer experience
+    const emailOptions = {
       from: `${fromName} <${fromEmail}>`,
       to: [to],
       subject: subject,
       html: htmlContent,
-    });
+      ...(adminEmail && { replyTo: adminEmail }),
+    };
+    
+    const { data, error } = await resend.emails.send(emailOptions);
     
     if (error) {
       console.error('Resend API error:', error);

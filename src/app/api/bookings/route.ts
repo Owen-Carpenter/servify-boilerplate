@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { formatDateForDB } from "@/lib/date-utils";
@@ -12,7 +13,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function POST(req: Request) {
   try {
     // Get the current session to check if the user is authenticated
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     // Debug logging
     console.log("Session state:", {
