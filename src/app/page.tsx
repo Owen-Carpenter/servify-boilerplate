@@ -346,12 +346,12 @@ export default function HomePage() {
                       {(index + 1).toString().padStart(2, '0')}
                     </div>
                     <CardHeader className="pb-2 relative z-10">
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
                           <CardTitle className="text-xl text-primary font-bold group-hover:text-primary/80 transition-colors">{service.title}</CardTitle>
-                          <CardDescription className="mt-1 text-white/80">{service.details}</CardDescription>
+                          <CardDescription className="mt-1 text-white/80 line-clamp-2">{service.details}</CardDescription>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white">
+                        <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white whitespace-nowrap flex-shrink-0 border border-white/10">
                           {formatCategoryName(service.category)}
                         </span>
                       </div>

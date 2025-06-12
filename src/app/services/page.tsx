@@ -222,12 +222,12 @@ function ServicesContent() {
                         {(index + 1).toString().padStart(2, '0')}
                       </div>
                       <CardHeader className="pb-2 relative z-10 w-full max-w-full overflow-hidden">
-                        <div className="flex justify-between items-start gap-2 w-full">
+                        <div className="flex justify-between items-start gap-3 w-full">
                           <div className="flex-1 min-w-0 overflow-hidden">
                             <CardTitle className="text-lg sm:text-xl text-primary font-bold group-hover:text-primary/80 transition-colors truncate">{service.title}</CardTitle>
                             <CardDescription className="mt-1 text-white/80 text-sm line-clamp-2 break-words">{service.details}</CardDescription>
                           </div>
-                          <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white whitespace-nowrap flex-shrink-0 max-w-[120px] truncate">
+                          <span className="text-xs px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white whitespace-nowrap flex-shrink-0 border border-white/10 max-w-[120px] truncate">
                             {formatCategoryName(service.category)}
                           </span>
                         </div>
