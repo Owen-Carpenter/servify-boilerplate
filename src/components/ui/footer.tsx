@@ -63,7 +63,8 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400">
-          <p className="mb-4">© {new Date().getFullYear()} Servify. All rights reserved.</p>
+          <p className="mb-2">© {new Date().getFullYear()} Servify. All rights reserved.</p>
+          <p className="text-sm text-gray-500">Developed by Owen Carpenter</p>
         </div>
       </div>
     </footer>

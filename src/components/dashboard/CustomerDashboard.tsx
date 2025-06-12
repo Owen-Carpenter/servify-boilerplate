@@ -374,17 +374,20 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
           {/* Main Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full z-10 relative">
-            <TabsList className="grid w-full max-w-md grid-cols-4 mx-auto bg-white/20 backdrop-blur-sm">
-              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
-                Overview
+            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-2 sm:grid-cols-4 gap-1 p-1">
+              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">Overview</span>
+                <span className="sm:hidden">Home</span>
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
-                Appointments
+              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">Appointments</span>
+                <span className="sm:hidden">Bookings</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
-                My Profile
+              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">My Profile</span>
+                <span className="sm:hidden">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
                 History
               </TabsTrigger>
             </TabsList>
