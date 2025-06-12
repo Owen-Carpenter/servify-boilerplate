@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const envFromEmail = process.env.EMAIL_FROM;
     const fromEmail = (envFromEmail && !envFromEmail.includes('gmail.com') && !envFromEmail.includes('yahoo.com') && !envFromEmail.includes('hotmail.com')) 
       ? envFromEmail 
-      : 'onboarding@resend.dev';
+      : 'noreply@servify-booking.shop';
     
     // Use the sender's name from the session
     const fromName = session.user.name || 'Service Admin';

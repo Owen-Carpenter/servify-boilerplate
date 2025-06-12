@@ -56,7 +56,7 @@ export async function sendPaymentReceiptEmail({
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'Servify <onboarding@resend.dev>',
+      from: 'Servify <noreply@servify-booking.shop>',
       to: email,
       subject: `Payment Receipt for ${serviceName}`,
       html
@@ -112,7 +112,7 @@ export async function sendAppointmentCancellationEmail({
 
     // Send the email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'Servify <onboarding@resend.dev>',
+      from: 'Servify <noreply@servify-booking.shop>',
       to: email,
       subject: `Your appointment for ${serviceName} has been cancelled`,
       html

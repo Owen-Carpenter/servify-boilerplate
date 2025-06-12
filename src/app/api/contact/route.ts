@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     // Get the contact email from environment variables
     const contactEmail = process.env.CONTACT_EMAIL || 'owen.carpenter.work@gmail.com';
     // Use Resend's default domain which doesn't require verification
-    const fromEmail = 'onboarding@resend.dev';
+    const fromEmail = 'noreply@servify-booking.shop';
     
     // Format the email content with HTML
     const htmlContent = `
