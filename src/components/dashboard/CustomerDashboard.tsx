@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,8 +146,10 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   };
 
   // Load time off periods
-  const loadTimeOffPeriods = async () => {
+  const loadTimeOffPeriods = useCallback(async () => {
     try {
+      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
       const fromDate = format(subWeeks(weekStart, 2), 'yyyy-MM-dd');
       const toDate = format(addWeeks(weekEnd, 2), 'yyyy-MM-dd');
       const timeOff = await getTimeOffPeriods(fromDate, toDate);
@@ -155,12 +157,12 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
     } catch (error) {
       console.error('Error loading time off periods:', error);
     }
-  };
+  }, [currentWeek]);
 
   // Reload time off when week changes
   useEffect(() => {
     loadTimeOffPeriods();
-  }, [currentWeek, weekStart, weekEnd]);
+  }, [loadTimeOffPeriods]);
 
   useEffect(() => {
     async function loadData() {
@@ -255,7 +257,7 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
       // Refresh user profile data
       loadUserProfile(session.user.id);
     }
-  }, [pathname, session]);
+  }, [pathname, session?.user?.id]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -374,20 +376,20 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
           {/* Main Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full z-10 relative">
-            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-2 sm:grid-cols-4 gap-1 p-1">
-              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-4 gap-1 p-1">
+              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">Overview</span>
                 <span className="sm:hidden">Home</span>
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">Appointments</span>
-                <span className="sm:hidden">Bookings</span>
+                <span className="sm:hidden">Book</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">My Profile</span>
                 <span className="sm:hidden">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 History
               </TabsTrigger>
             </TabsList>

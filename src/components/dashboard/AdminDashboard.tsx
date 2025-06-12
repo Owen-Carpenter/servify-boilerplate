@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -151,8 +151,10 @@ export default function AdminDashboard() {
   };
 
   // Load time off periods
-  const loadTimeOffPeriods = async () => {
+  const loadTimeOffPeriods = useCallback(async () => {
     try {
+      const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
       const fromDate = format(subWeeks(weekStart, 2), 'yyyy-MM-dd');
       const toDate = format(addWeeks(weekEnd, 2), 'yyyy-MM-dd');
       const timeOff = await getTimeOffPeriods(fromDate, toDate);
@@ -160,7 +162,7 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error loading time off periods:', error);
     }
-  };
+  }, [currentWeek]);
 
   useEffect(() => {
     async function loadData() {
@@ -246,7 +248,7 @@ export default function AdminDashboard() {
   // Reload time off when week changes
   useEffect(() => {
     loadTimeOffPeriods();
-  }, [currentWeek]);
+  }, [loadTimeOffPeriods]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -422,23 +424,23 @@ export default function AdminDashboard() {
 
           {/* Main Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full z-10 relative">
-            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 p-1">
-              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-5 gap-1 p-1">
+              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">Overview</span>
                 <span className="sm:hidden">Home</span>
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">Bookings</span>
-                <span className="sm:hidden">Bookings</span>
+                <span className="sm:hidden">Book</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2 col-span-2 sm:col-span-1">
+              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 Profile
               </TabsTrigger>
-              <TabsTrigger value="customers" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="customers" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 <span className="hidden sm:inline">Customers</span>
                 <span className="sm:hidden">Users</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-2 py-2">
+              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
                 History
               </TabsTrigger>
             </TabsList>
