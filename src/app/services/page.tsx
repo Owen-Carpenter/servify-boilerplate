@@ -148,59 +148,61 @@ function ServicesContent() {
           </div>
 
           {/* Filtering Options */}
-          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg shadow-md mb-8 mx-4 sm:mx-0 w-full max-w-full overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 w-full">
-              <div className="flex items-center flex-shrink-0">
-                <Filter className="w-5 h-5 text-white mr-2" />
-                <h2 className="text-lg text-white font-medium">Filter Services</h2>
+          <div className="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-lg shadow-md mb-8 mx-auto max-w-6xl w-full overflow-hidden">
+            <div className="flex flex-col gap-3 sm:gap-4 w-full">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
+                <div className="flex items-center flex-shrink-0">
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5 text-white mr-2" />
+                  <h2 className="text-base sm:text-lg text-white font-medium">Filter Services</h2>
+                </div>
+                
+                <div className="flex items-center w-full sm:w-auto min-w-0">
+                  <ArrowUpDown className="w-4 h-4 text-white mr-2 flex-shrink-0" />
+                  <select 
+                    className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none w-full sm:w-auto min-w-[180px]"
+                    value={sortOption}
+                    onChange={handleSortChange}
+                    style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
+                  >
+                    <option value="default" style={{ color: "black", background: "white" }}>Sort by: Default</option>
+                    <option value="price-low" style={{ color: "black", background: "white" }}>Price: Low to High</option>
+                    <option value="price-high" style={{ color: "black", background: "white" }}>Price: High to Low</option>
+                    <option value="duration" style={{ color: "black", background: "white" }}>Duration: Short to Long</option>
+                  </select>
+                </div>
               </div>
               
-              <div className="flex items-center w-full sm:w-auto min-w-0">
-                <ArrowUpDown className="w-4 h-4 text-white mr-2 flex-shrink-0" />
-                <select 
-                  className="bg-white/20 text-white border-0 rounded-md p-2 text-sm backdrop-blur-sm focus:ring-2 focus:ring-white/50 focus:outline-none w-full sm:w-auto min-w-0"
-                  value={sortOption}
-                  onChange={handleSortChange}
-                  style={{ color: "white", background: "rgba(255, 255, 255, 0.2)" }}
-                >
-                  <option value="default" style={{ color: "black", background: "white" }}>Sort by: Default</option>
-                  <option value="price-low" style={{ color: "black", background: "white" }}>Price: Low to High</option>
-                  <option value="price-high" style={{ color: "black", background: "white" }}>Price: High to Low</option>
-                  <option value="duration" style={{ color: "black", background: "white" }}>Duration: Short to Long</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 justify-center w-full overflow-hidden">
-              <Button
-                variant={activeCategory === "all" ? "default" : "outline"}
-                onClick={() => handleCategoryChange("all")}
-                className={`
-                  ${activeCategory === "all" 
-                    ? "bg-white/20 backdrop-blur-md text-white border-white/20"
-                    : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
-                  } transition-all duration-300 text-xs sm:text-sm flex-shrink-0
-                `}
-                size="sm"
-              >
-                All Services
-              </Button>
-              {categories.filter(category => category !== "all").map((category) => (
+              <div className="flex flex-wrap gap-2 justify-center w-full overflow-hidden">
                 <Button
-                  key={category}
-                  variant={activeCategory === category ? "default" : "outline"}
-                  onClick={() => handleCategoryChange(category)}
+                  variant={activeCategory === "all" ? "default" : "outline"}
+                  onClick={() => handleCategoryChange("all")}
                   className={`
-                    ${activeCategory === category 
+                    ${activeCategory === "all" 
                       ? "bg-white/20 backdrop-blur-md text-white border-white/20"
                       : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
                     } transition-all duration-300 text-xs sm:text-sm flex-shrink-0
                   `}
                   size="sm"
                 >
-                  {formatCategoryName(category)}
+                  All Services
                 </Button>
-              ))}
+                {categories.filter(category => category !== "all").map((category) => (
+                  <Button
+                    key={category}
+                    variant={activeCategory === category ? "default" : "outline"}
+                    onClick={() => handleCategoryChange(category)}
+                    className={`
+                      ${activeCategory === category 
+                        ? "bg-white/20 backdrop-blur-md text-white border-white/20"
+                        : "bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10"
+                      } transition-all duration-300 text-xs sm:text-sm flex-shrink-0
+                    `}
+                    size="sm"
+                  >
+                    {formatCategoryName(category)}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 
