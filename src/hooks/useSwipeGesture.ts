@@ -5,6 +5,8 @@ interface SwipeGestureOptions {
   onSwipeRight?: () => void;
   threshold?: number;
   preventDefaultTouchmove?: boolean;
+  onSwipeStart?: () => void;
+  onSwipeEnd?: () => void;
 }
 
 export function useSwipeGesture(options: SwipeGestureOptions) {
@@ -12,7 +14,9 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     onSwipeLeft,
     onSwipeRight,
     threshold = 50,
-    preventDefaultTouchmove = true
+    preventDefaultTouchmove = true,
+    onSwipeStart,
+    onSwipeEnd
   } = options;
 
   const startX = useRef<number>(0);
@@ -25,6 +29,7 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
     isSwiping.current = false;
+    onSwipeStart?.();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -65,6 +70,7 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     startX.current = 0;
     startY.current = 0;
     isSwiping.current = false;
+    onSwipeEnd?.();
   };
 
   // Mouse event handlers for desktop testing
@@ -73,6 +79,7 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     startY.current = e.clientY;
     isMouseDown.current = true;
     isSwiping.current = false;
+    onSwipeStart?.();
     e.preventDefault(); // Prevent text selection
   };
 
@@ -115,6 +122,7 @@ export function useSwipeGesture(options: SwipeGestureOptions) {
     startY.current = 0;
     isSwiping.current = false;
     isMouseDown.current = false;
+    onSwipeEnd?.();
   };
 
   const handleMouseLeave = () => {

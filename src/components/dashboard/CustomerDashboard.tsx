@@ -92,18 +92,38 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   // Tab order for swipe navigation
   const tabOrder = ["overview", "appointments", "profile", "history"];
   
+  // Animation state
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  
   // Swipe gesture handlers
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: () => {
       const currentIndex = tabOrder.indexOf(activeTab);
       if (currentIndex < tabOrder.length - 1) {
-        setActiveTab(tabOrder[currentIndex + 1]);
+        setSlideDirection('left');
+        setIsAnimating(true);
+        setTimeout(() => {
+          setActiveTab(tabOrder[currentIndex + 1]);
+          setTimeout(() => {
+            setIsAnimating(false);
+            setSlideDirection(null);
+          }, 50);
+        }, 150);
       }
     },
     onSwipeRight: () => {
       const currentIndex = tabOrder.indexOf(activeTab);
       if (currentIndex > 0) {
-        setActiveTab(tabOrder[currentIndex - 1]);
+        setSlideDirection('right');
+        setIsAnimating(true);
+        setTimeout(() => {
+          setActiveTab(tabOrder[currentIndex - 1]);
+          setTimeout(() => {
+            setIsAnimating(false);
+            setSlideDirection(null);
+          }, 50);
+        }, 150);
       }
     },
     threshold: 50,
@@ -418,7 +438,13 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
             {/* Tab Contents */}
             <div 
-              className="mt-8 relative transition-all duration-200 ease-out select-none"
+              className={`mt-8 relative select-none transition-all duration-300 ease-out ${
+                isAnimating 
+                  ? slideDirection === 'left' 
+                    ? 'transform -translate-x-full opacity-0' 
+                    : 'transform translate-x-full opacity-0'
+                  : 'transform translate-x-0 opacity-100'
+              }`}
               {...swipeHandlers}
               style={{ 
                 touchAction: 'pan-y',
