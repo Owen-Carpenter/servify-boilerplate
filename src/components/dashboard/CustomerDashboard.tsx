@@ -134,8 +134,10 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
   const today = new Date();
   const todayForDB = getTodayForDB();
   
-  // Filter out cancelled bookings for overview and appointments tabs
-  const activeBookings = bookings.filter(booking => booking.status !== 'cancelled');
+  // Filter out cancelled and completed bookings for overview and appointments tabs
+  const activeBookings = bookings.filter(booking => 
+    booking.status !== 'cancelled' && booking.status !== 'completed'
+  );
   
   const upcomingBookings = activeBookings.filter(booking => 
     (booking.status === 'confirmed' || booking.status === 'pending') && 

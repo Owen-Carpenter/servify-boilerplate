@@ -151,8 +151,10 @@ export default function AdminDashboard() {
   // Group bookings by status and date
   const today = new Date();
   
-  // Filter out cancelled bookings for overview and bookings tabs
-  const activeBookings = bookings.filter(booking => booking.status !== 'cancelled');
+  // Filter out cancelled and completed bookings for overview and bookings tabs
+  const activeBookings = bookings.filter(booking => 
+    booking.status !== 'cancelled' && booking.status !== 'completed'
+  );
   
   const upcomingBookings = activeBookings.filter(booking => 
     (booking.status === 'confirmed' || booking.status === 'pending') && 
