@@ -418,20 +418,20 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
 
           {/* Main Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full z-10 relative">
-            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-4 gap-1 p-1">
-              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
+            <TabsList className="grid w-full max-w-2xl mx-auto bg-white/20 backdrop-blur-sm grid-cols-4 gap-1 p-1 rounded-lg h-12">
+              <TabsTrigger value="overview" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-sm px-3 rounded-md transition-all duration-200 flex items-center justify-center h-full">
                 <span className="hidden sm:inline">Overview</span>
                 <span className="sm:hidden">Home</span>
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
+              <TabsTrigger value="appointments" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-sm px-3 rounded-md transition-all duration-200 flex items-center justify-center h-full">
                 <span className="hidden sm:inline">Appointments</span>
                 <span className="sm:hidden">Book</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
+              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-sm px-3 rounded-md transition-all duration-200 flex items-center justify-center h-full">
                 <span className="hidden sm:inline">My Profile</span>
                 <span className="sm:hidden">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-xs sm:text-sm px-1 sm:px-2 py-2">
+              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary text-sm px-3 rounded-md transition-all duration-200 flex items-center justify-center h-full">
                 History
               </TabsTrigger>
             </TabsList>
@@ -451,8 +451,8 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                 cursor: 'grab'
               }}
             >
-              {/* Swipe indicator for mobile */}
-              <div className="md:hidden flex justify-center mb-4 space-x-2">
+              {/* Swipe indicator */}
+              <div className="flex justify-center mb-4 space-x-2">
                 {tabOrder.map((tab) => (
                   <div
                     key={tab}
@@ -464,9 +464,9 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
               </div>
               
               {/* Swipe hint text */}
-              <div className="md:hidden text-center mb-4">
+              <div className="text-center mb-4">
                 <p className="text-white/50 text-xs">
-                  Swipe or drag left/right to navigate between tabs
+                  <span className="hidden sm:inline">Click tabs above or </span>swipe/drag left/right to navigate
                 </p>
               </div>
               <TabsContent value="overview" className="space-y-6">
