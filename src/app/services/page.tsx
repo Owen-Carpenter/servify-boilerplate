@@ -310,7 +310,7 @@ function ServicesContent() {
               className="bg-accent hover:bg-accent/90 text-white hover:shadow-lg transition-all duration-300"
               asChild
             >
-              <Link href="/contact">Contact Us</Link>
+              <Link href="/#contact">Contact Us</Link>
             </Button>
           </div>
         </div>
