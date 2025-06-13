@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -105,6 +106,27 @@ export default function AdminDashboard() {
   
   // Weekly view state
   const [currentWeek, setCurrentWeek] = useState(new Date());
+
+  // Tab order for swipe navigation
+  const tabOrder = ["overview", "appointments", "profile", "customers", "history"];
+  
+  // Swipe gesture handlers
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: () => {
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex < tabOrder.length - 1) {
+        setActiveTab(tabOrder[currentIndex + 1]);
+      }
+    },
+    onSwipeRight: () => {
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabOrder[currentIndex - 1]);
+      }
+    },
+    threshold: 50,
+    preventDefaultTouchmove: true
+  });
 
   // Group bookings by status and date
   const today = new Date();
@@ -446,7 +468,32 @@ export default function AdminDashboard() {
             </TabsList>
 
             {/* Tab Contents */}
-            <div className="mt-8">
+            <div 
+              className="mt-8 relative transition-all duration-200 ease-out select-none"
+              {...swipeHandlers}
+              style={{ 
+                touchAction: 'pan-y',
+                cursor: 'grab'
+              }}
+            >
+              {/* Swipe indicator for mobile */}
+              <div className="md:hidden flex justify-center mb-4 space-x-2">
+                {tabOrder.map((tab) => (
+                  <div
+                    key={tab}
+                    className={`h-1 w-8 rounded-full transition-colors duration-200 ${
+                      tab === activeTab ? 'bg-white/60' : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Swipe hint text */}
+              <div className="md:hidden text-center mb-4">
+                <p className="text-white/50 text-xs">
+                  Swipe or drag left/right to navigate between tabs
+                </p>
+              </div>
               <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Admin Profile Card */}
