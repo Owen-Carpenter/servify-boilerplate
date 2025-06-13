@@ -678,7 +678,16 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent 
+                    className="p-0"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'auto' }}
+                  >
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
@@ -780,7 +789,16 @@ export default function CustomerDashboard({ userId }: CustomerDashboardProps) {
                     <CardTitle>All Bookings</CardTitle>
                     <CardDescription>Your upcoming and past appointments</CardDescription>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent 
+                    className="p-0"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'auto' }}
+                  >
                     {activeBookings.length > 0 ? (
                       <div className="divide-y">
                         {sortBookingsByDateTime(activeBookings).map((booking) => (

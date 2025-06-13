@@ -742,7 +742,16 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent 
+                    className="p-0"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'auto' }}
+                  >
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
@@ -847,7 +856,16 @@ export default function AdminDashboard() {
                     <CardTitle>All Bookings</CardTitle>
                     <CardDescription>Manage all customer bookings</CardDescription>
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent 
+                    className="p-0"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'auto' }}
+                  >
                     {activeBookings.length > 0 ? (
                       <div className="divide-y">
                         {sortBookingsByDateTime(activeBookings).map((booking) => (
@@ -997,7 +1015,16 @@ export default function AdminDashboard() {
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="p-0">
+                  <CardContent 
+                    className="p-0"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'auto' }}
+                  >
                     {customersLoading ? (
                       <div className="space-y-4 p-6">
                         {[...Array(5)].map((_, i) => (
