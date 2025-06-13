@@ -56,8 +56,11 @@ export async function sendPaymentReceiptEmail({
     );
 
     // Send the email using Resend
+    const fromEmail = getFormattedSender('Servify');
+    console.log('Sending payment receipt email with from:', fromEmail, 'to:', email);
+    
     const { data, error } = await resend.emails.send({
-      from: getFormattedSender('Servify'),
+      from: fromEmail,
       to: email,
       subject: `Payment Receipt for ${serviceName}`,
       html
@@ -112,8 +115,11 @@ export async function sendAppointmentCancellationEmail({
     );
 
     // Send the email using Resend
+    const fromEmail = getFormattedSender('Servify');
+    console.log('Sending cancellation email with from:', fromEmail, 'to:', email);
+    
     const { data, error } = await resend.emails.send({
-      from: getFormattedSender('Servify'),
+      from: fromEmail,
       to: email,
       subject: `Your appointment for ${serviceName} has been cancelled`,
       html
