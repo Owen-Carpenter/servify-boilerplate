@@ -128,8 +128,14 @@ export default function AppointmentDetailsPage() {
     );
   }
 
-  const isUpcoming = appointment.status === 'confirmed' || appointment.status === 'pending';
-  const isPast = appointment.status === 'completed' || appointment.status === 'cancelled';
+  // Determine if appointment is in the past based on date, not just status
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const appointmentDateOnly = new Date(appointment.date.getFullYear(), appointment.date.getMonth(), appointment.date.getDate());
+  const isDateInPast = appointmentDateOnly < today;
+  
+  const isUpcoming = (appointment.status === 'confirmed' || appointment.status === 'pending') && !isDateInPast;
+  const isPast = appointment.status === 'completed' || appointment.status === 'cancelled' || isDateInPast;
 
   return (
     <main className="gradient-bg pt-32 pb-20">

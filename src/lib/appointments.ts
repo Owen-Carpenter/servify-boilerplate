@@ -34,10 +34,19 @@ function mapSupabaseBookingToAppointment(booking: SupabaseBooking): Appointment 
     booking.payment_status === 'paid'; // Also check booking.payment_status
   
   // If Stripe shows payment is complete, treat the booking as confirmed
-  const effectiveStatus: AppointmentStatus = 
+  let effectiveStatus: AppointmentStatus = 
     booking.status === 'pending' && stripePaymentComplete
       ? 'confirmed'
       : booking.status as AppointmentStatus;
+
+  // Check if confirmed appointment is in the past - if so, mark as completed
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const appointmentDateOnly = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+  
+  if (effectiveStatus === 'confirmed' && appointmentDateOnly < today) {
+    effectiveStatus = 'completed';
+  }
 
   return {
     id: booking.id,

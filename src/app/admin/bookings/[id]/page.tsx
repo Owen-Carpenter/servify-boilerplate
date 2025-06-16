@@ -164,13 +164,32 @@ export default function AdminBookingDetailPage({ params }: { params: Promise<{ i
             <CardHeader className="bg-primary/5 border-b">
               <div className="flex justify-between items-center">
                 <CardTitle>{booking.service_name}</CardTitle>
-                <Badge className={
-                  booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                  booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-red-100 text-red-800'
-                }>
-                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                <Badge className={(() => {
+                  // Check if booking is in the past to show completed status
+                  const now = new Date();
+                  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const appointmentDate = new Date(booking.appointment_date);
+                  const appointmentDateOnly = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+                  const isDateInPast = appointmentDateOnly < today;
+                  
+                  const displayStatus = booking.status === 'confirmed' && isDateInPast ? 'completed' : booking.status;
+                  
+                  return displayStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                    displayStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    displayStatus === 'completed' ? 'bg-blue-100 text-blue-800' :
+                    'bg-red-100 text-red-800';
+                })()}>
+                  {(() => {
+                    // Check if booking is in the past to show completed status
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const appointmentDate = new Date(booking.appointment_date);
+                    const appointmentDateOnly = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+                    const isDateInPast = appointmentDateOnly < today;
+                    
+                    const displayStatus = booking.status === 'confirmed' && isDateInPast ? 'completed' : booking.status;
+                    return displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1);
+                  })()}
                 </Badge>
               </div>
               <CardDescription>
@@ -226,24 +245,34 @@ export default function AdminBookingDetailPage({ params }: { params: Promise<{ i
               </div>
             </CardContent>
             <CardFooter className="p-6 bg-secondary/10 flex flex-wrap gap-4 justify-end">
-              {booking.status === 'confirmed' && (
-                <>
-                  <Button
-                    variant="outline"
-                    className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
-                    onClick={() => router.push(`/admin/bookings/${booking.id}/reschedule`)}
-                  >
-                    Reschedule
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
-                    onClick={handleCancelBooking}
-                  >
-                    Cancel Booking
-                  </Button>
-                </>
-              )}
+              {(() => {
+                // Check if booking is in the past
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const appointmentDate = new Date(booking.appointment_date);
+                const appointmentDateOnly = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+                const isDateInPast = appointmentDateOnly < today;
+                
+                // Only show reschedule/cancel for confirmed bookings that are not in the past
+                return booking.status === 'confirmed' && !isDateInPast && (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="bg-white hover:bg-blue-50 hover:text-blue-600 border-blue-200 text-blue-600"
+                      onClick={() => router.push(`/admin/bookings/${booking.id}/reschedule`)}
+                    >
+                      Reschedule
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                      onClick={handleCancelBooking}
+                    >
+                      Cancel Booking
+                    </Button>
+                  </>
+                );
+              })()}
               {booking.customer_email && (
                 <EmailDialog 
                   customerEmail={booking.customer_email}
