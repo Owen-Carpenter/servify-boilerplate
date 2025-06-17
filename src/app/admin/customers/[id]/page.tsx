@@ -93,14 +93,12 @@ export default function CustomerDetailsPage({ params }: { params: Promise<{ id: 
         
         setCustomer(customerData as UserProfile);
         
-        // Get bookings count for this customer
-        const { count, error: countError } = await supabase
-          .from('bookings')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', customerId);
+        // Get bookings count for this customer using API
+        const response = await fetch(`/api/bookings/customer/${customerId}`);
+        const bookingResult = await response.json();
         
-        if (!countError && count !== null) {
-          setBookingsCount(count);
+        if (bookingResult.success) {
+          setBookingsCount(bookingResult.bookings?.length || 0);
         }
       } catch (error) {
         console.error("Error loading customer details:", error);

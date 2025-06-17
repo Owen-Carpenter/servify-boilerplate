@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, BadgeCheck, X, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/auth";
+import { createClient } from "@supabase/supabase-js";
 import { Footer } from "@/components/ui/footer";
 import { SupabaseBooking } from "@/lib/supabase-bookings";
 import { EmailDialog } from "@/components/admin/EmailDialog";
@@ -34,6 +34,11 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
   const [customer, setCustomer] = useState<UserProfile | null>(null);
   const [bookings, setBookings] = useState<SupabaseBooking[]>([]);
   const router = useRouter();
+
+  // Initialize Supabase with service role for admin operations
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   useEffect(() => {
     async function loadData() {
@@ -91,15 +96,12 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
         
         setCustomer(customerData as UserProfile);
         
-        // Load customer bookings
-        const { data: bookingsData, error: bookingsError } = await supabase
-          .from('bookings')
-          .select('*')
-          .eq('user_id', customerId)
-          .order('created_at', { ascending: false });
+        // Load customer bookings using API route for better admin access
+        const response = await fetch(`/api/bookings/customer/${customerId}`);
+        const bookingResult = await response.json();
         
-        if (bookingsError) {
-          console.error("Error fetching customer bookings:", bookingsError);
+        if (!bookingResult.success) {
+          console.error("Error fetching customer bookings:", bookingResult.message);
           toast({
             variant: "destructive",
             title: "Error",
@@ -109,7 +111,7 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
         }
         
         // Add customer info to bookings for EmailDialog
-        const bookingsWithCustomerInfo = bookingsData.map(booking => ({
+        const bookingsWithCustomerInfo = (bookingResult.bookings || []).map((booking: SupabaseBooking) => ({
           ...booking,
           customer_name: customerData.name,
           customer_email: customerData.email
@@ -228,18 +230,28 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
             <CardContent className="p-0">
               {bookings.length > 0 ? (
                 <div className="divide-y max-h-[600px] overflow-y-auto">
-                  {bookings.map((booking) => (
+                  {bookings.map((booking) => {
+                    // Check if booking is in the past to show completed status
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const appointmentDate = new Date(booking.appointment_date);
+                    const appointmentDateOnly = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+                    const isDateInPast = appointmentDateOnly < today;
+                    
+                    const displayStatus = booking.status === 'confirmed' && isDateInPast ? 'completed' : booking.status;
+                    
+                    return (
                     <div key={booking.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="sm:mr-4 self-start sm:self-center">
-                        {booking.status === 'confirmed' ? (
+                        {displayStatus === 'confirmed' ? (
                           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <Calendar className="h-5 w-5 text-primary" />
                           </div>
-                        ) : booking.status === 'completed' ? (
+                        ) : displayStatus === 'completed' ? (
                           <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
                             <BadgeCheck className="h-5 w-5 text-green-600" />
                           </div>
-                        ) : booking.status === 'pending' ? (
+                        ) : displayStatus === 'pending' ? (
                           <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
                             <Clock className="h-5 w-5 text-yellow-600" />
                           </div>
@@ -260,12 +272,12 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 sm:items-center mt-3 sm:mt-0">
                         <Badge className={
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                          displayStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          displayStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          displayStatus === 'completed' ? 'bg-blue-100 text-blue-800' :
                           'bg-red-100 text-red-800'
                         }>
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
                         </Badge>
                         <div className="flex gap-2 mt-2 sm:mt-0">
                           <Button
@@ -276,7 +288,7 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
                           >
                             Details
                           </Button>
-                          {booking.status === 'confirmed' && (
+                          {booking.status === 'confirmed' && !isDateInPast && (
                             <>
                               <Button
                                 variant="outline"
@@ -299,7 +311,8 @@ export default function CustomerBookingsPage({ params }: { params: Promise<{ id:
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center p-8">
