@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 
 // Initialize Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -10,7 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function POST(req: Request) {
   try {
     // Get the session to authenticate the user
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     // Parse the request body
     const { bookingId } = await req.json();
