@@ -333,6 +333,45 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeletePendingBooking = async (bookingId: string) => {
+    try {
+      // Call API to delete pending booking
+      const response = await fetch('/api/bookings/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bookingId }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete booking');
+      }
+      
+      // Remove from local state
+      setBookings(bookings.filter(booking => booking.id !== bookingId));
+      
+      // Update booking counts
+      setBookingCounts({
+        ...bookingCounts,
+        pending: Math.max(0, bookingCounts.pending - 1)
+      });
+      
+      toast({
+        title: "Booking deleted",
+        description: "The pending booking has been successfully deleted",
+      });
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "There was an error deleting this booking",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Function to handle appointment selection from calendar
   const handleSelectAppointment = (appointment: Appointment) => {
     router.push(`/admin/bookings/${appointment.id}`);
@@ -651,6 +690,16 @@ export default function AdminDashboard() {
                                 >
                                   Details
                                 </Button>
+                                {booking.status === 'pending' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive min-w-0 flex-shrink-0"
+                                    onClick={() => handleDeletePendingBooking(booking.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
                                 {booking.customer_email && (
                                   <EmailDialog 
                                     customerEmail={booking.customer_email}
@@ -937,6 +986,16 @@ export default function AdminDashboard() {
                                 >
                                   Details
                                 </Button>
+                                {booking.status === 'pending' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive min-w-0 flex-shrink-0"
+                                    onClick={() => handleDeletePendingBooking(booking.id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
                                 {booking.customer_email && (
                                   <EmailDialog 
                                     customerEmail={booking.customer_email}

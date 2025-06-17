@@ -41,9 +41,27 @@ export async function POST(req: Request) {
     }
     
     // Check if user has access to delete this booking
-    if (userId && booking.user_id !== userId) {
+    // Allow if user is the booking owner or an admin
+    if (userId) {
+      // Get user role to check if they're an admin
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      const isAdmin = userData?.role === 'admin';
+      const isOwner = booking.user_id === userId;
+      
+      if (!isOwner && !isAdmin) {
+        return NextResponse.json(
+          { success: false, message: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
+        { success: false, message: "Authentication required" },
         { status: 401 }
       );
     }

@@ -118,6 +118,38 @@ export default function AdminBookingDetailPage({ params }: { params: Promise<{ i
     }
   };
 
+  const handleDeletePendingBooking = async () => {
+    try {
+      const response = await fetch('/api/bookings/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bookingId }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete booking');
+      }
+      
+      toast({
+        title: "Booking deleted",
+        description: "The pending booking has been successfully deleted",
+      });
+      
+      // Redirect back to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "There was an error deleting this booking",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <PageLoader 
@@ -245,6 +277,15 @@ export default function AdminBookingDetailPage({ params }: { params: Promise<{ i
               </div>
             </CardContent>
             <CardFooter className="p-6 bg-secondary/10 flex flex-wrap gap-4 justify-end">
+              {booking.status === 'pending' && (
+                <Button
+                  variant="outline"
+                  className="bg-white hover:bg-destructive/10 hover:text-destructive border-destructive/30 text-destructive"
+                  onClick={handleDeletePendingBooking}
+                >
+                  Delete Pending Booking
+                </Button>
+              )}
               {(() => {
                 // Check if booking is in the past
                 const now = new Date();
