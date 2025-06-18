@@ -4,6 +4,8 @@ import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Navigation } from "@/components/ui/navigation";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo/structured-data";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -86,6 +88,10 @@ export default function RootLayout({
 }) {
   const organizationSchema = generateOrganizationSchema();
   const websiteSchema = generateWebsiteSchema();
+  
+  // Get analytics IDs from environment variables
+  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
+  const GTM_ID = process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID;
 
   return (
     <html lang="en">
@@ -113,6 +119,12 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//www.googletagmanager.com" />
       </head>
       <body className={inter.className}>
+        {/* Google Tag Manager */}
+        {GTM_ID && <GoogleTagManager GTM_ID={GTM_ID} />}
+        
+        {/* Google Analytics */}
+        {GA_MEASUREMENT_ID && <GoogleAnalytics GA_MEASUREMENT_ID={GA_MEASUREMENT_ID} />}
+        
         <SessionProvider>
           <div className="flex flex-col min-h-screen">
             <Navigation />
